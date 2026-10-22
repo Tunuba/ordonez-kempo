@@ -124,9 +124,9 @@
     const g = x.createRadialGradient(0, 0, sr * .1, 0, 0, sr);
     g.addColorStop(0, '#ff7a45'); g.addColorStop(.55, '#e2321f'); g.addColorStop(.98, '#a5160f'); g.addColorStop(1, 'rgba(165,22,15,0)');
     x.fillStyle = g; x.beginPath(); x.arc(0, 0, sr, 0, Math.PI * 2); x.fill();
-    x.globalCompositeOperation = 'destination-out';
-    for (let i = 0; i < 6; i++) x.fillRect(-sr, sr * (.25 + i * .14), sr * 2, 2 + i * 2.2);
-    x.globalCompositeOperation = 'source-over';
+    const bs = x.createRadialGradient(-sr * .3, -sr * .35, 0, 0, 0, sr);
+    bs.addColorStop(0, 'rgba(255,220,170,.35)'); bs.addColorStop(.6, 'rgba(255,200,150,0)');
+    x.fillStyle = bs; x.beginPath(); x.arc(0, 0, sr, 0, Math.PI * 2); x.fill();
     const RE = sr * 1.08 + 6;
     capaEnso = lienzo(RE * 2 * D, RE * 2 * D);
     x = capaEnso.getContext('2d');
@@ -417,8 +417,8 @@
     } else if (V.estado === 'llamado') {
       // va hacia el toque, da una vuelta y se va
       const m = V.meta;
-      V.ang += dt * 4.2;
-      const r = 70;
+      V.ang += dt * 2.6;
+      const r = 120;
       const tx = m.x + Math.cos(V.ang) * r, ty = m.y + Math.sin(V.ang) * r * .7;
       const dx = tx - V.x, dy = ty - V.y, d = Math.hypot(dx, dy) || 1;
       const sp = Math.min(d, 760 * dt);
@@ -545,12 +545,33 @@
     saludo:   { nom: 'Saludo', desc: 'Así empieza y termina cada clase, con respeto.', seq: [['firme', .5, .4], ['saludo', .6, .9], ['firme', .5, .5], ['guardia', .5, .8]], parte: null }
   };
   let tecActual = 'guardia', tTiempo = 0, tEspera = 0, estela = [], saco = { a: 0, v: 0 };
+  let fxT = null, yaPego = false, maxLlega = 0;
+  const choque = {};
+  const alcance = {}, golpesSaco = [];
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__tec = () => ({ fxT, alcance: Object.assign({}, alcance), a: saco.a, v: saco.v, marcas: (saco.marcas || []).length });
+  // golpe seco al saco, sintetizado, solo despues de que la persona toco la pagina
+  let ac = null;
+  addEventListener('pointerdown', () => { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (er) {} } }, { once: true, capture: true });
+  function sonarGolpe(f) {
+    if (!ac || ac.state !== 'running') return;
+    const t = ac.currentTime;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(48, t + .18);
+    g.gain.setValueAtTime(.28 * f, t); g.gain.exponentialRampToValueAtTime(.001, t + .22);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + .25);
+    const n = ac.createBuffer(1, ac.sampleRate * .08, ac.sampleRate), d = n.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    const fuente = ac.createBufferSource(), gn = ac.createGain(), fl = ac.createBiquadFilter();
+    fl.type = 'lowpass'; fl.frequency.value = 900;
+    fuente.buffer = n; gn.gain.value = .22 * f;
+    fuente.connect(fl).connect(gn).connect(ac.destination); fuente.start(t);
+  }
   const nombreTec = document.getElementById('tec-nombre');
   document.getElementById('tec-botones').addEventListener('click', e => {
     const b = e.target.closest('.tec-btn');
     if (!b) return;
     document.querySelectorAll('.tec-btn').forEach(x => x.classList.toggle('activo', x === b));
-    tecActual = b.dataset.tec; tEspera = 0; estela = [];
+    tecActual = b.dataset.tec; tEspera = 0; estela = []; maxLlega = 0; yaPego = false;
     tAnim.cola = []; tAnim.t = 1; tAnim.espera = 0;
     nombreTec.textContent = TEC[tecActual].nom;
     const desc = document.getElementById('tec-desc');
@@ -565,6 +586,8 @@
     tTiempo += dt;
     tEspera -= dt;
     if (tAnim.libre() && tEspera <= 0) {
+      if (maxLlega > 0 && TEC[tecActual].parte) alcance[tecActual] = maxLlega;
+      maxLlega = 0;
       TEC[tecActual].seq.forEach(([p, d, q]) => tAnim.a(p, d, q, p === 'guardia' || p === 'firme' || p === 'saludo' ? null : 'golpe'));
       tEspera = TEC[tecActual].seq.reduce((a, x) => a + x[1] + x[2], 0) + .2;
     }
@@ -592,33 +615,212 @@
       x.beginPath(); x.moveTo(s.w / 2 + i * 60 * e, suelo); x.lineTo(s.w / 2 + i * 140 * e, s.h);
       x.strokeStyle = 'rgba(0,0,0,.25)'; x.lineWidth = 1; x.stroke();
     }
-    // saco de golpeo
-    const bx = s.w * .72, by = suelo - 230 * e;
+    // ---------- saco de golpeo con fisica de cuerpo rigido ----------
+    // Cuelga de una cadena, es un cilindro de 32 kg. Cada golpe le da un
+    // impulso horizontal en el punto de contacto, se mece como pendulo fisico,
+    // gira un poco sobre su eje si el golpe va descentrado y guarda la marca.
+    const bx = s.w * .7, cuelga = s.h * .02, by = suelo - 232 * e, alto = 172 * e, medio = 31 * e;
     const golpeEn = TEC[tecActual].parte;
-    saco.v += (-saco.a * 40 - saco.v * 4) * dt * 3; saco.a += saco.v * dt * 3;
-    x.save(); x.translate(bx, s.h * .02); x.rotate(saco.a);
-    x.strokeStyle = '#3a2a20'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, by - s.h * .02); x.stroke();
-    const sg = x.createLinearGradient(-30 * e, 0, 30 * e, 0);
-    sg.addColorStop(0, '#5a0f0b'); sg.addColorStop(.5, '#b3211a'); sg.addColorStop(1, '#4a0c09');
-    x.fillStyle = sg;
-    x.beginPath(); x.roundRect(-30 * e, by - s.h * .02, 60 * e, 170 * e, 22 * e); x.fill();
-    x.fillStyle = 'rgba(232,176,74,.8)'; x.fillRect(-30 * e, by - s.h * .02 + 30 * e, 60 * e, 6 * e); x.fillRect(-30 * e, by - s.h * .02 + 130 * e, 60 * e, 6 * e);
+    const ppm = alto / 1.2;                       // el saco mide 1.2 m
+    const Lc = (by + alto * .5 - cuelga) / ppm;   // del gancho al centro, en metros
+    const hm = alto / ppm, wm = 2 * medio / ppm, M = 32;
+    const I = M * (Lc * Lc + hm * hm / 12 + wm * wm / 12);
+    // pendulo fisico, momento de la gravedad sobre el gancho
+    if (!isFinite(saco.tw)) saco.tw = 0;
+    if (!isFinite(saco.tv)) saco.tv = 0;
+    const sub = 4;
+    for (let k = 0; k < sub; k++) {
+      const h = dt / sub;
+      saco.v += (-(M * 9.8 * Lc / I) * Math.sin(saco.a) - .32 * saco.v) * h;
+      saco.a += saco.v * h;
+      // giro sobre su eje, como resorte con poco freno
+      saco.tv += (-6 * saco.tw - .55 * saco.tv) * h;
+      saco.tw += saco.tv * h;
+    }
+    // al regresar no atraviesa al karateka, choca con su cuerpo en toda la
+    // altura de la cara de enfrente y rebota suave
+    if (fxT !== null) {
+      const frente = fxT + 38 * e;
+      let peor = 0, brazoPeor = 1;
+      for (const yl of [0, alto * .5, alto]) {
+        const Y = yl + (by - cuelga);
+        const X = bx - medio * Math.cos(saco.a) - Y * Math.sin(saco.a);
+        if (frente - X > peor) { peor = frente - X; brazoPeor = Y; }
+      }
+      if (peor > 0) {
+        saco.a -= peor / brazoPeor;
+        if (saco.v > 0) saco.v = -saco.v * .3;
+      }
+    }
+    // marcas, se hunden con el golpe y regresan despacio como espuma
+    saco.marcas = saco.marcas || [];
+    for (let i = saco.marcas.length - 1; i >= 0; i--) {
+      const m = saco.marcas[i];
+      m.t += dtReal;
+      if (!m.apretando) m.prof *= Math.exp(-dtReal / 1.6);
+      m.apretando = false;
+      if (m.t > 4.5) saco.marcas.splice(i, 1);
+    }
+    // borde de la cara de enfrente a una altura de pantalla, con la marca hundida
+    // angulo de cada marca alrededor del cilindro, 0 es el borde de enfrente
+    // que da al karateka; con el giro del saco la marca se va hacia el frente
+    // de la vista o hacia atras, y solo hunde el contorno cuando esta en el borde
+    const anguloDe = (m) => saco.tw - m.tw0;
+    const hundidoEn = (yl) => {
+      let d = 0;
+      for (const m of saco.marcas) {
+        const r = (yl - m.y) / m.r;
+        if (Math.abs(r) >= 1) continue;
+        const enBorde = Math.max(0, Math.cos(anguloDe(m)));
+        d = Math.max(d, m.prof * Math.cos(r * Math.PI / 2) * enBorde * enBorde);
+      }
+      return d;
+    };
+    // punto de pantalla a coordenadas del saco, x desde su eje, y desde su tapa
+    const aSaco = (X, Y) => {
+      const dx = X - bx, dy = Y - cuelga, c = Math.cos(saco.a), sn = Math.sin(saco.a);
+      return [dx * c + dy * sn, -dx * sn + dy * c - (by - cuelga)];
+    };
+    const aPantalla = (lx, ly) => {
+      const c = Math.cos(saco.a), sn = Math.sin(saco.a), Y = ly + (by - cuelga);
+      return [bx + lx * c - Y * sn, cuelga + lx * sn + Y * c];
+    };
+    x.save(); x.translate(bx, cuelga); x.rotate(saco.a);
+    // cadena
+    x.strokeStyle = '#6a5848'; x.lineWidth = 2.2 * e;
+    for (let yy = 0; yy < by - cuelga - 4 * e; yy += 9 * e) { x.beginPath(); x.ellipse(0, yy + 4.5 * e, 2.4 * e, 4.5 * e, 0, 0, Math.PI * 2); x.stroke(); }
+    const y0 = by - cuelga, y1 = y0 + alto, r = 22 * e;
+    // contorno, la cara de enfrente sigue las marcas hundidas
+    x.beginPath();
+    x.moveTo(-medio + r, y0);
+    x.lineTo(medio - r, y0); x.quadraticCurveTo(medio, y0, medio, y0 + r);
+    x.lineTo(medio, y1 - r); x.quadraticCurveTo(medio, y1, medio - r, y1);
+    x.lineTo(-medio + r, y1); x.quadraticCurveTo(-medio, y1, -medio, y1 - r);
+    for (let yl = alto - r; yl >= r; yl -= 3 * e) x.lineTo(-medio + hundidoEn(yl), y0 + yl);
+    x.lineTo(-medio, y0 + r);
+    x.quadraticCurveTo(-medio, y0, -medio + r, y0);
+    x.closePath();
+    // la luz se corre con el giro sobre su eje
+    const gir = Math.sin(saco.tw) * medio * .7;
+    const sg = x.createLinearGradient(-medio, 0, medio, 0);
+    const luz = Math.max(.15, Math.min(.85, .5 + gir / (medio * 2)));
+    sg.addColorStop(0, '#4a0c09'); sg.addColorStop(luz, '#c42a20'); sg.addColorStop(1, '#3e0a07');
+    x.fillStyle = sg; x.fill();
+    x.save(); x.clip();
+    // costuras y franjas que tambien giran
+    x.strokeStyle = 'rgba(0,0,0,.25)'; x.lineWidth = 1.2 * e;
+    x.beginPath(); x.moveTo(gir * .9, y0); x.lineTo(gir * .9, y1); x.stroke();
+    x.fillStyle = 'rgba(232,176,74,.85)';
+    for (const fy of [30, 132]) {
+      x.beginPath(); x.ellipse(0, y0 + fy * e + 3 * e, medio, 3 * e, 0, 0, Math.PI); x.lineTo(-medio, y0 + fy * e); x.ellipse(0, y0 + fy * e, medio, 3 * e, 0, Math.PI, 0, true); x.fill();
+    }
+    // la huella que deja cada golpe, nudillos o planta, se va borrando
+    for (const m of saco.marcas) {
+      const th = anguloDe(m);
+      // del lado de atras del cilindro no se ve
+      const cara = Math.sin(th);
+      if (cara < -.05) continue;
+      const vis = Math.min(1, (4.5 - m.t) / 1.5) * Math.min(1, m.prof / (4 * e) + .4);
+      if (vis <= 0) continue;
+      // posicion sobre la superficie, se achica de lado cerca del borde
+      const cx0 = -medio * Math.cos(th) + hundidoEn(m.y) * Math.cos(th);
+      const ancho = Math.max(.32, cara);
+      const cy0 = y0 + m.y;
+      x.save();
+      x.translate(cx0, cy0);
+      x.scale(ancho, 1);
+      x.globalAlpha = vis * .6;
+      x.fillStyle = '#2a0503';
+      if (m.tipo === 'mano') {
+        // cuatro nudillos en fila
+        for (let k = -1.5; k <= 1.5; k++) { x.beginPath(); x.ellipse(5 * e, k * 4.6 * e, 4.4 * e, 2.6 * e, 0, 0, Math.PI * 2); x.fill(); }
+      } else {
+        x.beginPath(); x.ellipse(6 * e, 0, 7 * e, 13 * e, 0, 0, Math.PI * 2); x.fill();
+      }
+      // brillo del borde de la marca, se nota hundida
+      x.globalAlpha = vis * .4; x.strokeStyle = '#ff8a6a'; x.lineWidth = 1.2 * e;
+      x.beginPath(); x.ellipse(5 * e, 0, (m.tipo === 'mano' ? 7 : 9) * e, (m.tipo === 'mano' ? 11 : 15) * e, 0, -2.2, 2.2); x.stroke();
+      x.restore();
+    }
     x.restore();
-    // figura
-    const fxT = s.w * .44;
+    x.restore();
+    // figura, se acerca a la distancia justa para que su golpe llegue al saco
+    const meta = golpeEn ? bx - medio + 14 * e - (alcance[tecActual] || (golpeEn === 'pie' ? 108 : 92) * e) : s.w * .4;
+    if (fxT === null) fxT = meta;
+    fxT += (meta - fxT) * Math.min(1, dtReal * 3);
     x.fillStyle = 'rgba(0,0,0,.5)'; x.beginPath(); x.ellipse(fxT, suelo + 4, 70 * e, 9 * e, 0, 0, Math.PI * 2); x.fill();
     const pts = F.dibujar(x, pose, { x: fxT, suelo: suelo + 4, escala: e * 1.25, mira: 1, cinta: '#141012', vincha: '#d7261e', tiempo: tTiempo * 2 });
     // estela del golpe
     if (golpeEn) {
-      const p = pts[golpeEn];
-      estela.unshift({ x: p[0], y: p[1] });
+      const p = tecActual === 'combo' ? (pts.pie[0] > pts.mano[0] ? pts.pie : pts.mano) : pts[golpeEn];
+      const llega = (tecActual === 'combo' ? pts.mano[0] : p[0]) - fxT;
+      if (tAnim.hacia !== F.POSES.guardia && !tecActual.startsWith('bloq')) maxLlega = Math.max(maxLlega, llega);
+      // la estela solo acompana al golpe que va, al regresar se apaga
+      if (tAnim.hacia !== F.POSES.guardia && (!estela.length || p[0] >= estela[0].x - 2 * e)) estela.unshift({ x: p[0], y: p[1] });
+      else estela.pop();
       if (estela.length > 14) estela.pop();
       for (let i = 1; i < estela.length; i++) {
+        if (Math.hypot(estela[i - 1].x - estela[i].x, estela[i - 1].y - estela[i].y) < 1.5 * e) continue;
         x.beginPath(); x.moveTo(estela[i - 1].x, estela[i - 1].y); x.lineTo(estela[i].x, estela[i].y);
         x.strokeStyle = `rgba(255,${120 + i * 6},60,${(1 - i / estela.length) * .8})`;
         x.lineWidth = (1 - i / estela.length) * 14 * e; x.lineCap = 'round'; x.stroke();
       }
-      if (p[0] > bx - 40 * e && Math.abs(saco.a) < .05 && tAnim.t > .5 && tAnim.t < .9) saco.v += .9;
+    }
+    // contacto, puno y pie siempre, en cualquier tecnica y en cualquier momento
+    const contactos = [['mano', pts.mano], ['pie', pts.pie]];
+    for (const [tipo, q] of contactos) {
+      const st = choque[tipo] || (choque[tipo] = { px: q[0], py: q[1], toca: false, marca: null });
+      const vx = (q[0] - st.px) / Math.max(1e-3, dt), vy = (q[1] - st.py) / Math.max(1e-3, dt);
+      st.px = q[0]; st.py = q[1];
+      const [lx, yLocal] = aSaco(q[0], q[1]);
+      const dentro = yLocal > -4 * e && yLocal < alto + 4 * e;
+      // cuanto entra el puno o el pie pasando la cara de enfrente
+      const entra = lx + medio;
+      const bordeSin = aPantalla(-medio, yLocal)[0];
+      if (dentro && entra > -1.5 * e) {
+        // velocidad del borde del saco en ese punto, para el golpe relativo
+        // con rotate de canvas, angulo positivo lleva la parte baja hacia el karateka
+        const vSaco = -saco.v * (q[1] - cuelga);
+        const vRel = vx - vSaco;
+        if (!st.toca && vRel > 60 * e) {
+          // impulso, masa efectiva del brazo o la pierna por su velocidad
+          const mEf = tipo === 'pie' ? 6 : 2.6;
+          const J = Math.min(36, mEf * (vRel / ppm) * 1.4 * (tecActual === 'combo' ? .8 : 1));
+          const rr = (q[1] - cuelga) / ppm;
+          saco.v -= J * rr / I;
+          // la patada circular entra de lado y lo hace girar sobre su eje,
+          // el puno recto casi no lo gira
+          const lateral = tecActual === 'circular' || (tecActual === 'combo' && tipo === 'pie') ? 1 : tecActual === 'cuchillo' ? .45 : .12;
+          saco.tv += J * lateral * .09;
+          // la marca nace en el borde, apenas hacia el frente para que se vea
+          st.marca = { y: Math.max(8 * e, Math.min(alto - 8 * e, yLocal)), r: (tipo === 'pie' ? 26 : 18) * e, prof: 0, t: 0, tipo, apretando: true, tw0: saco.tw - .18 };
+          saco.marcas.push(st.marca);
+          if (saco.marcas.length > 8) saco.marcas.shift();
+          golpesSaco.push({ x: bordeSin, y: aPantalla(-medio, yLocal)[1], t: 0 });
+          sonarGolpe(Math.min(1.6, J / 18));
+          st.toca = true;
+        }
+        // mientras empuja, la marca se hunde lo que entra el puno o el pie
+        if (st.toca && st.marca) { st.marca.prof = Math.max(st.marca.prof, Math.min(16 * e, Math.max(0, entra))); st.marca.apretando = entra > 0; }
+      } else if (entra < -8 * e || !dentro) {
+        st.toca = false; st.marca = null;
+      }
+    }
+    // destellos donde pego
+    for (let i = golpesSaco.length - 1; i >= 0; i--) {
+      const g = golpesSaco[i];
+      g.t += dtReal * 2.4;
+      if (g.t >= 1) { golpesSaco.splice(i, 1); continue; }
+      x.beginPath(); x.arc(g.x, g.y, (8 + g.t * 40) * e, 0, Math.PI * 2);
+      x.strokeStyle = `rgba(255,220,140,${1 - g.t})`; x.lineWidth = 4 * e * (1 - g.t); x.stroke();
+      for (let k = 0; k < 7; k++) {
+        const an = Math.PI * (.55 + k / 6 * .9);
+        x.beginPath();
+        x.moveTo(g.x + Math.cos(an) * (10 + g.t * 26) * e, g.y + Math.sin(an) * (10 + g.t * 26) * e);
+        x.lineTo(g.x + Math.cos(an) * (18 + g.t * 44) * e, g.y + Math.sin(an) * (18 + g.t * 44) * e);
+        x.strokeStyle = k % 2 ? `rgba(255,74,46,${1 - g.t})` : `rgba(255,235,180,${1 - g.t})`;
+        x.lineWidth = 2.5 * e; x.stroke();
+      }
     }
   }
 

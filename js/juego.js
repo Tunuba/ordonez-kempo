@@ -159,10 +159,10 @@
     const sol = x.createLinearGradient(0, sy - sr, 0, sy + sr);
     sol.addColorStop(0, '#fff1b8'); sol.addColorStop(.5, '#ffc05a'); sol.addColorStop(1, '#ff5a2a');
     x.beginPath(); x.arc(cx, sy, sr, 0, Math.PI * 2); x.fillStyle = sol; x.fill();
-    // franjas del sol
-    x.globalCompositeOperation = 'destination-out';
-    for (let i = 0; i < 6; i++) { const yy = sy + sr * (.15 + i * .15); x.fillRect(cx - sr, yy, sr * 2, 2 + i * 1.2); }
-    x.globalCompositeOperation = 'source-over';
+    // brillo suave del sol, sin franjas
+    const brilloSol = x.createRadialGradient(cx - sr * .3, sy - sr * .35, 0, cx, sy, sr);
+    brilloSol.addColorStop(0, 'rgba(255,255,235,.55)'); brilloSol.addColorStop(.6, 'rgba(255,240,200,0)');
+    x.beginPath(); x.arc(cx, sy, sr, 0, Math.PI * 2); x.fillStyle = brilloSol; x.fill();
     // nubes largas
     x.fillStyle = 'rgba(60,10,20,.35)';
     for (let i = 0; i < 5; i++) {

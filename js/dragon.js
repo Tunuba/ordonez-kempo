@@ -76,7 +76,7 @@
       if (dx / d > .25) this.ladoMeta = 1;
       else if (dx / d < -.25) this.ladoMeta = -1;
     }
-    this.lado += (this.ladoMeta - this.lado) * Math.min(1, dt * 5);
+    this.lado += (this.ladoMeta - this.lado) * Math.min(1, dt * 3.2);
   };
 
   Dragon.prototype.colocar = function (x, y, ang) {
@@ -126,18 +126,38 @@
     const N = P0.length;
     const L = this.lado, sL = L >= 0 ? 1 : -1, aL = Math.abs(L);
 
-    // tangentes y normales del camino
-    const tan = [];
-    for (let i = 0; i < N; i++) {
-      const a = P0[Math.max(0, i - 1)], b = P0[Math.min(N - 1, i + 1)];
-      let dx = a.x - b.x, dy = a.y - b.y;
-      const d = Math.hypot(dx, dy) || 1;
-      tan.push([dx / d, dy / d]);
+    // camino suavizado, las vueltas cerradas se vuelven curvas redondas.
+    // La cabeza queda fija y cada pasada reparte el doblez entre vecinos.
+    let S = P0.map(p => ({ x: p.x, y: p.y, z: p.z }));
+    for (let pasada = 0; pasada < 4; pasada++) {
+      const T = S.map(p => ({ x: p.x, y: p.y, z: p.z }));
+      for (let i = 1; i < N - 1; i++) {
+        const peso = Math.min(1, i / 3) * .5;
+        T[i].x = S[i].x + ((S[i - 1].x + S[i + 1].x) / 2 - S[i].x) * peso;
+        T[i].y = S[i].y + ((S[i - 1].y + S[i + 1].y) / 2 - S[i].y) * peso;
+      }
+      T[N - 1].x = S[N - 1].x + (S[N - 2].x - S[N - 1].x) * .25;
+      T[N - 1].y = S[N - 1].y + (S[N - 2].y - S[N - 1].y) * .25;
+      S = T;
     }
+    // tangentes del camino, mirando dos puntos a cada lado para que no tiemblen
+    const tangente = (A, i) => {
+      const a = A[Math.max(0, i - 2)], b = A[Math.min(N - 1, i + 2)];
+      const dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy) || 1;
+      return [dx / d, dy / d];
+    };
+    const tan = [];
+    for (let i = 0; i < N; i++) tan.push(tangente(S, i));
     // ondulacion propia, nula en la cabeza
-    const Q = P0.map((p, i) => {
+    // cuanto se dobla en cada punto, en las curvas cerradas la onda se calma
+    const doblez = S.map((p, i) => {
+      if (i < 2 || i > N - 3) return 0;
+      const a = tan[i - 2], b = tan[i + 2];
+      return Math.min(1, Math.hypot(a[0] - b[0], a[1] - b[1]) * 1.6);
+    });
+    const Q = S.map((p, i) => {
       const s = i / (N - 1);
-      const env = Math.min(1, s / .18) * (1 - s * .3);
+      const env = Math.min(1, s / .18) * (1 - s * .3) * (1 - doblez[i] * .85);
       // onda larga y lenta, vuela como dragon, no culebrea
       const fase = this.recorrido / (this.sep * 26) * Math.PI * 2 + t * .9;
       const amp = W * (.07 + Math.min(.1, this.rapidez / 5000));
@@ -147,16 +167,32 @@
     // normales finales, la normal "n" apunta al lomo
     const nx = [], ny = [], ww = [];
     for (let i = 0; i < N; i++) {
-      const a = Q[Math.max(0, i - 1)], b = Q[Math.min(N - 1, i + 1)];
-      let dx = a.x - b.x, dy = a.y - b.y;
-      const d = Math.hypot(dx, dy) || 1;
-      dx /= d; dy /= d;
+      const [dx, dy] = tangente(Q, i);
       tan[i] = [dx, dy];
       // lomo hacia arriba de la pantalla cuando avanza a la derecha
       nx.push(dy * sL); ny.push(-dx * sL);
       ww.push(W * perfil(i / (N - 1)) * (op.prof ? op.prof(Q[i].z) : 1) * (1 + Math.sin(t * 5 - i * .4) * .025));
     }
-    const lomo = (i, k) => [Q[i].x + nx[i] * ww[i] * .5 * k, Q[i].y + ny[i] * ww[i] * .5 * k];
+    // radio de la curva en cada punto y de que lado queda su centro
+    const radio = [], adentro = [];
+    for (let i = 0; i < N; i++) {
+      const a = tan[Math.max(0, i - 1)], b = tan[Math.min(N - 1, i + 1)];
+      const ddx = a[0] - b[0], ddy = a[1] - b[1];
+      const giro = Math.hypot(ddx, ddy);
+      const largo = this.sep * (i === 0 || i === N - 1 ? 1 : 2);
+      radio.push(giro > 1e-4 ? largo / giro : 1e9);
+      // la normal apunta hacia el centro si la tangente gira hacia ella
+      adentro.push(Math.sign(nx[i] * -ddx + ny[i] * -ddy) || 1);
+    }
+    // del lado de adentro el borde nunca pasa el centro de la curva, asi no se cruza
+    const lomo = (i, k) => {
+      let o = ww[i] * .5 * k;
+      if (Math.sign(k) === adentro[i]) {
+        const tope = radio[i] * .82;
+        if (Math.abs(o) > tope) o = Math.sign(o) * (tope + (Math.abs(o) - tope) * .15);
+      }
+      return [Q[i].x + nx[i] * o, Q[i].y + ny[i] * o];
+    };
 
     // tramos seguidos que pasan el filtro
     const tramos = [];
@@ -270,7 +306,8 @@
       // sombra del lomo y luz arriba para dar volumen
       ctx.beginPath(); ctx.moveTo(lomo(a, 1)[0], lomo(a, 1)[1]);
       for (let i = a + 1; i <= b; i++) ctx.lineTo(lomo(i, 1)[0], lomo(i, 1)[1]);
-      ctx.strokeStyle = E.oscuro; ctx.lineWidth = W * .38; ctx.stroke();
+      ctx.strokeStyle = E.oscuro; ctx.lineWidth = W * .38;
+      ctx.globalAlpha = Math.min(1, .25 + aL * .75); ctx.stroke(); ctx.globalAlpha = 1;
       // placas de la panza, una sola franja y un solo trazo para las lineas
       ctx.beginPath();
       let p0 = lomo(a, -1.05); ctx.moveTo(p0[0], p0[1]);
@@ -328,16 +365,22 @@
     let dif = meta - this.angCab;
     while (dif > Math.PI) dif -= Math.PI * 2;
     while (dif < -Math.PI) dif += Math.PI * 2;
-    this.angCab += dif * .18;
+    this.angCab += dif * .12;
     const ang = this.angCab + Math.sin(this.t * 2.3) * .05;
     const t = this.t;
     const s = W / 22 * (op.prof ? op.prof(h.z) : 1) * .95;
-    const flip = this.lado;
+    // la cabeza voltea por su cuenta y rapido, segun hacia donde mira
+    const c = Math.cos(this.angCab);
+    if (c > .2) this.volteo = 1; else if (c < -.2) this.volteo = -1; else if (this.volteo == null) this.volteo = 1;
+    if (this.cabVol == null) this.cabVol = this.volteo;
+    this.cabVol += (this.volteo - this.cabVol) * .22;
+    const flip = this.cabVol;
     const boca = Math.max(0, Math.min(1.5, this.boca));
     ctx.save();
     ctx.translate(h.x, h.y);
     ctx.rotate(ang);
-    ctx.scale(s, s * (Math.abs(flip) < .2 ? (flip < 0 ? -.2 : .2) : flip));
+    // nunca se aplasta del todo, al pasar por el medio queda de perfil delgado un instante
+    ctx.scale(s, s * (flip < 0 ? -1 : 1) * (.62 + .38 * Math.abs(flip)));
 
     // melena larga hacia atras
     for (let i = 0; i < 8; i++) {
