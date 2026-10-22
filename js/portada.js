@@ -535,14 +535,14 @@
   const tctx = tc.getContext('2d');
   const tAnim = new F.Animador('guardia');
   const TEC = {
-    guardia:  { nom: 'Guardia', seq: [['guardia', .4, 1.4]], parte: null },
-    directo:  { nom: 'Puño directo', seq: [['directo', .14, .5], ['guardia', .35, .8]], parte: 'mano' },
-    cuchillo: { nom: 'Mano de cuchillo', seq: [['cuchillo', .18, .5], ['guardia', .35, .8]], parte: 'mano' },
-    frontal:  { nom: 'Patada frontal', seq: [['frontal', .2, .5], ['guardia', .4, .8]], parte: 'pie' },
-    circular: { nom: 'Patada circular', seq: [['circular', .24, .5], ['guardia', .45, .8]], parte: 'pie' },
-    bloqueo:  { nom: 'Bloqueo alto', seq: [['bloqueo', .18, .7], ['guardia', .35, .8]], parte: 'mano' },
-    combo:    { nom: 'Combo Kempo', seq: [['directo', .1, .08], ['cruzado', .1, .08], ['cuchillo', .12, .08], ['codo', .1, .08], ['circular', .2, .4], ['guardia', .4, 1]], parte: 'mano' },
-    saludo:   { nom: 'Saludo', seq: [['firme', .5, .4], ['saludo', .6, .9], ['firme', .5, .5], ['guardia', .5, .8]], parte: null }
+    guardia:  { nom: 'Guardia', desc: 'Manos arriba, mentón abajo y peso repartido en las dos piernas.', seq: [['guardia', .4, 1.4]], parte: null },
+    directo:  { nom: 'Puño directo', desc: 'Sale recto desde la guardia y regresa igual de rápido.', seq: [['directo', .14, .5], ['guardia', .35, .8]], parte: 'mano' },
+    cuchillo: { nom: 'Mano de cuchillo', desc: 'Se golpea con el canto de la mano abierta, muy del Kempo.', seq: [['cuchillo', .18, .5], ['guardia', .35, .8]], parte: 'mano' },
+    frontal:  { nom: 'Patada frontal', desc: 'Sube la rodilla, extiende la pierna y empuja con la planta.', seq: [['frontal', .2, .5], ['guardia', .4, .8]], parte: 'pie' },
+    circular: { nom: 'Patada circular', desc: 'La cadera gira y la pierna entra de lado, alta y con fuerza.', seq: [['circular', .24, .5], ['guardia', .45, .8]], parte: 'pie' },
+    bloqueo:  { nom: 'Bloqueo alto', desc: 'El antebrazo sube y protege la cabeza de un golpe de arriba.', seq: [['bloqueo', .18, .7], ['guardia', .35, .8]], parte: 'mano' },
+    combo:    { nom: 'Combo Kempo', desc: 'Directo, cruzado, cuchillo, codo y patada sin parar.', seq: [['directo', .1, .08], ['cruzado', .1, .08], ['cuchillo', .12, .08], ['codo', .1, .08], ['circular', .2, .4], ['guardia', .4, 1]], parte: 'mano' },
+    saludo:   { nom: 'Saludo', desc: 'Así empieza y termina cada clase, con respeto.', seq: [['firme', .5, .4], ['saludo', .6, .9], ['firme', .5, .5], ['guardia', .5, .8]], parte: null }
   };
   let tecActual = 'guardia', tTiempo = 0, tEspera = 0, estela = [], saco = { a: 0, v: 0 };
   const nombreTec = document.getElementById('tec-nombre');
@@ -553,6 +553,8 @@
     tecActual = b.dataset.tec; tEspera = 0; estela = [];
     tAnim.cola = []; tAnim.t = 1; tAnim.espera = 0;
     nombreTec.textContent = TEC[tecActual].nom;
+    const desc = document.getElementById('tec-desc');
+    if (desc) { desc.textContent = TEC[tecActual].desc; desc.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 }); }
     nombreTec.animate([{ transform: 'translateY(12px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: 'cubic-bezier(.2,.8,.2,1)' });
   });
   function pasoTecnica(dtReal) {
@@ -576,7 +578,7 @@
     x.fillStyle = '#1a1112'; x.fillRect(0, 0, s.w, suelo);
     for (let i = 0; i < s.w; i += 46 * e) { x.fillStyle = i / (46 * e) % 2 ? 'rgba(255,255,255,.015)' : 'rgba(0,0,0,.12)'; x.fillRect(i, 0, 46 * e, suelo); }
     // pergamino con kanji
-    const kx = s.w * .06, ky = s.h * .24;
+    const kx = s.w * .06, ky = s.h * .34;
     x.fillStyle = '#e9dfcc'; x.fillRect(kx, ky, 54 * e, 150 * e);
     x.fillStyle = '#5a3b22'; x.fillRect(kx - 6 * e, ky - 6 * e, 66 * e, 8 * e); x.fillRect(kx - 6 * e, ky + 148 * e, 66 * e, 8 * e);
     x.fillStyle = '#1a1214'; x.font = `${38 * e}px "Yuji Syuku", serif`; x.textAlign = 'center';

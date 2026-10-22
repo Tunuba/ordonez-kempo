@@ -197,20 +197,20 @@
 
   // Cinturones
   const CINTAS = [
-    ['Blanco', '#f3ece0', 'El primer día'],
-    ['Amarillo', '#f2c230', '3 meses'],
-    ['Naranja', '#f07b22', '6 meses'],
-    ['Verde', '#2f9e4a', '1 año'],
-    ['Azul', '#2f6fd6', '1 año y medio'],
-    ['Morado', '#7b3fb8', '2 años'],
-    ['Café', '#7a4a26', '3 años'],
-    ['Negro', '#141012', '4 años o más']
+    ['Blanco', '#f3ece0', 'El primer día', 'Saludo, postura, guardia y cómo caer sin lastimarse.'],
+    ['Amarillo', '#f2c230', '3 meses', 'Golpes de puño y mano abierta, y los primeros bloqueos.'],
+    ['Naranja', '#f07b22', '6 meses', 'Patadas frontales y circulares, y combinaciones cortas.'],
+    ['Verde', '#2f9e4a', '1 año', 'Defensa contra agarres y combinaciones más largas.'],
+    ['Azul', '#2f6fd6', '1 año y medio', 'Combate controlado con protección y más velocidad.'],
+    ['Morado', '#7b3fb8', '2 años', 'Formas avanzadas y defensa contra varios ataques.'],
+    ['Café', '#7a4a26', '3 años', 'Precisión, potencia y ayudar a los más nuevos.'],
+    ['Negro', '#141012', '4 años o más', 'Dominio de la técnica y el compromiso de enseñar.']
   ];
   window.CINTAS = CINTAS;
   const fila = document.querySelector('.cintas-fila');
   if (fila) {
-    fila.innerHTML = CINTAS.map(([n, col, t]) => `
-      <div class="cinta-item">
+    fila.innerHTML = CINTAS.map(([n, col, t], i) => `
+      <button class="cinta-item${i === 0 ? ' activa' : ''}" data-i="${i}">
         <svg viewBox="0 0 160 64" aria-hidden="true">
           <path d="M6 22h148v14H6z" fill="${col}" stroke="${n === 'Negro' ? '#4a3d40' : 'rgba(0,0,0,.35)'}" stroke-width="1.5"/>
           <path d="M70 36l-16 26h10l14-20M90 36l16 26H96L82 42" fill="${col}" stroke="${n === 'Negro' ? '#4a3d40' : 'rgba(0,0,0,.35)'}" stroke-width="1.5" stroke-linejoin="round"/>
@@ -218,7 +218,17 @@
           ${n === 'Negro' ? '<rect x="130" y="22" width="16" height="14" fill="#d7261e"/>' : ''}
         </svg>
         <b>${n}</b><small>${t}</small>
-      </div>`).join('');
+      </button>`).join('');
+    const queAprende = document.createElement('p');
+    queAprende.className = 'cinta-aprende';
+    fila.after(queAprende);
+    const elegir = (i) => {
+      fila.querySelectorAll('.cinta-item').forEach((b, k) => b.classList.toggle('activa', k === i));
+      queAprende.innerHTML = '<b>Cinturón ' + CINTAS[i][0].toLowerCase() + '</b> ' + CINTAS[i][3];
+      queAprende.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 350 });
+    };
+    fila.addEventListener('click', e => { const b = e.target.closest('.cinta-item'); if (b) elegir(+b.dataset.i); });
+    elegir(0);
   }
 
   // Horario

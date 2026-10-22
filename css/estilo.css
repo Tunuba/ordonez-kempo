@@ -241,6 +241,7 @@ h2 { font-size: clamp(44px, 5.6vw, 88px); font-weight: 900; text-transform: uppe
 #lienzo-tecnica { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tec-nombre { position: absolute; left: 22px; top: 16px; margin: 0; font-family: var(--display); font-weight: 900; font-size: 2.2rem; text-transform: uppercase; letter-spacing: .04em; }
 .tec-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.tec-desc { position: absolute; left: 22px; top: 64px; right: 40%; margin: 0; font-size: .95rem; color: var(--papel-2); max-width: 340px; pointer-events: none; }
 .tec-btn {
   text-align: left; padding: 14px 16px; border: 0; border-radius: 14px; cursor: pointer;
   background: var(--tinta-3); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
@@ -254,7 +255,11 @@ h2 { font-size: clamp(44px, 5.6vw, 88px); font-weight: 900; text-transform: uppe
 
 .cintas { margin-top: 60px; }
 .cintas-fila { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 16px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-.cinta-item { flex: 1 0 120px; scroll-snap-align: start; text-align: center; cursor: default; }
+.cinta-item { flex: 1 0 120px; scroll-snap-align: start; text-align: center; cursor: pointer; border: 0; background: none; padding: 8px 4px; border-radius: 14px; transition: background .25s; }
+.cinta-item.activa { background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(232,176,74,.4); }
+.cinta-item.activa svg { transform: translateY(-6px); }
+.cinta-aprende { margin: 8px 0 0; font-size: 1.05rem; color: var(--papel-2); min-height: 1.6em; }
+.cinta-aprende b { color: var(--oro-2); margin-right: 6px; }
 .cinta-item svg { width: 100%; height: 64px; transition: transform .35s cubic-bezier(.2,.9,.3,1.4); }
 .cinta-item:hover svg { transform: translateY(-8px) rotate(-3deg); }
 .cinta-item b { display: block; font-family: var(--display); text-transform: uppercase; font-size: 1.15rem; margin-top: 6px; }
@@ -549,6 +554,8 @@ body[data-pagina=inicio] .pie { display: none; }
   .pilar { padding: 16px; }
   .tec-botones { grid-template-columns: 1fr 1fr; }
   .tec-escena { min-height: 320px; }
+  .tec-nombre { font-size: 1.8rem; }
+  .tec-desc { right: 16px; top: 54px; font-size: .86rem; line-height: 1.35; }
   .juego-marco { aspect-ratio: 3 / 4; max-height: none; width: 100%; }
   .ins-opciones, .ins-meta { grid-template-columns: 1fr 1fr; }
   .ins-quien .opcion:last-child { grid-column: span 2; }

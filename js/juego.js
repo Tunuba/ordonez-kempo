@@ -309,7 +309,9 @@
     golpear(mejor, lado, pose);
   }
 
+  const vibrar = (ms) => { try { if (navigator.vibrate && modo === 'jugando') navigator.vibrate(ms); } catch (er) {} };
   function golpear(e, lado, pose) {
+    vibrar(e.vida <= 1 ? 22 : 12);
     e.vida--;
     e.blanco = .08;
     combo++;
@@ -371,6 +373,7 @@
   function recibir(e) {
     if (invul > 0 || modo === 'fin') return;
     if (modo === 'menu') return;
+    vibrar([60, 40, 60]);
     vidas--;
     combo = 0;
     invul = 1.1;
