@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ordóñez Team Kempo Karate</title>
+<meta name="description" content="Kempo Karate Hawaiano en San José Pinula. Clases para niños, jóvenes y adultos, Q250 al mes y primera clase gratis.">
+<meta name="theme-color" content="#0c0a0b">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&text=%E6%8B%B3%E6%B3%95%E9%BE%8D%E7%A9%BA%E6%89%8B%E9%81%93%E5%BF%83%E6%8A%80%E4%BD%93%E7%A4%BC%E5%8A%9B&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilo.css">
+<link rel="stylesheet" href="css/juego.css">
+<link rel="stylesheet" href="css/inscripcion.css">
+</head>
+<body>
+
+<header class="barra" id="barra">
+  <a class="marca" href="#inicio" aria-label="Inicio">
+    <svg class="logo-mini" data-logo viewBox="0 0 200 200" aria-hidden="true"></svg>
+    <span class="marca-txt"><b>ORDÓÑEZ TEAM</b><small>Kempo Karate</small></span>
+  </a>
+  <nav class="menu" aria-label="Secciones">
+    <a href="#inicio">Inicio</a>
+    <a href="#promos">Promos</a>
+    <a href="#clases">Clases</a>
+    <a href="#estilo">Estilo</a>
+    <a href="#tecnicas">Técnicas</a>
+    <a href="#horario">Horario</a>
+    <a href="#juego">Juego</a>
+    <a href="#inscripcion">Inscripción</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+  <a class="btn btn-rojo btn-chico" href="#inscripcion">Preinscríbete</a>
+</header>
+
+<main>
+
+<section class="portada" id="inicio">
+  <canvas id="lienzo-portada" aria-label="Karateka en guardia con un dragón alrededor"></canvas>
+  <div class="portada-kanji" aria-hidden="true">拳法</div>
+  <div class="portada-txt">
+    <p class="antetitulo"><span class="punto-vivo"></span>San José Pinula, Guatemala</p>
+    <h1><span class="h1-a">ORDÓÑEZ TEAM</span><span class="h1-b">KEMPO KARATE</span></h1>
+    <p class="portada-sub">Kempo Karate Hawaiano para niños, jóvenes y adultos. <b>Q250 al mes</b> y tu primera clase es gratis.</p>
+    <div class="portada-btns">
+      <a class="btn btn-rojo" href="#inscripcion">Preinscríbete gratis</a>
+      <a class="btn btn-borde" href="#juego">Juega el Reto del Dragón</a>
+    </div>
+  </div>
+  <p class="portada-pista" id="pista-dragon">Toca la pantalla y mira al dragón</p>
+  <a class="bajar" href="#promos" aria-label="Bajar"><span></span></a>
+</section>
+
+<div class="cinta-texto" aria-hidden="true">
+  <div class="cinta-pista">
+    <span>Disciplina</span><i></i><span>Respeto</span><i></i><span>Defensa personal</span><i></i><span>Confianza</span><i></i><span>Condición física</span><i></i><span>Espíritu de equipo</span><i></i>
+    <span>Disciplina</span><i></i><span>Respeto</span><i></i><span>Defensa personal</span><i></i><span>Confianza</span><i></i><span>Condición física</span><i></i><span>Espíritu de equipo</span><i></i>
+  </div>
+</div>
+
+<section class="seccion" id="promos">
+  <div class="cabeza">
+    <p class="kicker">Este mes en el dojo</p>
+    <h2>Promociones</h2>
+  </div>
+  <div class="promos">
+    <article class="promo promo-grande" data-inclinar>
+      <div class="promo-sello">GRATIS</div>
+      <h3>Primera clase gratis</h3>
+      <p>Ven a probar sin pagar nada. Solo trae ropa cómoda y agua.</p>
+      <a class="btn btn-rojo btn-chico" href="#inscripcion">Quiero mi clase</a>
+    </article>
+    <article class="promo" data-inclinar>
+      <div class="promo-num"><small>Q</small>0</div>
+      <h3>Inscripción gratis</h3>
+      <p>Te inscribes sin costo hasta el 30 de noviembre.</p>
+      <div class="cuenta" id="cuenta" aria-label="Tiempo que queda">
+        <div><b data-c="d">00</b><small>días</small></div>
+        <div><b data-c="h">00</b><small>horas</small></div>
+        <div><b data-c="m">00</b><small>min</small></div>
+        <div><b data-c="s">00</b><small>seg</small></div>
+      </div>
+    </article>
+    <article class="promo" data-inclinar>
+      <div class="promo-num"><small>Q</small>250</div>
+      <h3>Al mes, todos igual</h3>
+      <p>Mismo precio para niños, jóvenes y adultos. Cinco días de clase a la semana.</p>
+    </article>
+    <article class="promo" data-inclinar>
+      <div class="promo-num"><small>Q</small>200</div>
+      <h3>Hermanos</h3>
+      <p>Desde el segundo hermano, cada uno paga Q200 al mes.</p>
+    </article>
+  </div>
+</section>
+
+<section class="seccion seccion-oscura" id="clases">
+  <div class="cabeza">
+    <p class="kicker">Para toda la familia</p>
+    <h2>Clases</h2>
+  </div>
+  <div class="clases" id="clases-lista">
+    <article class="clase" data-grupo="ninos">
+      <canvas class="clase-fig" data-pose="ninos"></canvas>
+      <div class="clase-info">
+        <p class="clase-edad">5 a 11 años</p>
+        <h3>Niños</h3>
+        <p>Disciplina, coordinación y confianza, aprendiendo mientras juegan.</p>
+        <ul class="clase-lista">
+          <li>Grupos pequeños</li>
+          <li>Juegos de reflejos</li>
+          <li>Respeto en casa y en la escuela</li>
+        </ul>
+        <div class="clase-pie"><span class="precio"><small>Q</small>250<em>al mes</em></span><a class="btn btn-borde btn-chico" href="#inscripcion" data-elige="ninos">Inscribir</a></div>
+      </div>
+    </article>
+    <article class="clase" data-grupo="jovenes">
+      <canvas class="clase-fig" data-pose="jovenes"></canvas>
+      <div class="clase-info">
+        <p class="clase-edad">12 a 17 años</p>
+        <h3>Jóvenes</h3>
+        <p>Técnica, condición física y control del carácter.</p>
+        <ul class="clase-lista">
+          <li>Combinaciones y combate</li>
+          <li>Preparación para cinturones</li>
+          <li>Más energía y enfoque</li>
+        </ul>
+        <div class="clase-pie"><span class="precio"><small>Q</small>250<em>al mes</em></span><a class="btn btn-borde btn-chico" href="#inscripcion" data-elige="jovenes">Inscribir</a></div>
+      </div>
+    </article>
+    <article class="clase" data-grupo="adultos">
+      <canvas class="clase-fig" data-pose="adultos"></canvas>
+      <div class="clase-info">
+        <p class="clase-edad">18 años en adelante</p>
+        <h3>Adultos</h3>
+        <p>Defensa personal real y buena forma física, empieces como empieces.</p>
+        <ul class="clase-lista">
+          <li>Defensa ante agarres y golpes</li>
+          <li>Entreno de alta intensidad</li>
+          <li>Sin experiencia previa</li>
+        </ul>
+        <div class="clase-pie"><span class="precio"><small>Q</small>250<em>al mes</em></span><a class="btn btn-borde btn-chico" href="#inscripcion" data-elige="adultos">Inscribir</a></div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="seccion" id="estilo">
+  <div class="estilo">
+    <div class="estilo-txt">
+      <p class="kicker">Nuestro enfoque</p>
+      <h2>Kempo Karate Hawaiano</h2>
+      <p class="estilo-lead">El Kempo llegó a Hawái en los años cuarenta y ahí se mezcló con otras artes de combate. Así nació un estilo directo, de combinaciones rápidas y pensado para defenderse de verdad.</p>
+      <p>En Ordóñez Team lo enseñamos con paciencia y exigencia. Cada alumno avanza a su ritmo, cinturón por cinturón.</p>
+    </div>
+    <div class="pilares">
+      <div class="pilar"><svg viewBox="0 0 48 48"><path d="M8 30c6-10 16-16 32-16M30 8l10 6-6 10" /><path d="M8 40c8-6 18-9 30-8" opacity=".5"/></svg><h3>Combinaciones rápidas</h3><p>Varios golpes en un segundo, sin pausa.</p></div>
+      <div class="pilar"><svg viewBox="0 0 48 48"><path d="M14 40V20c0-3 4-3 4 0v-8c0-3 4-3 4 0v-2c0-3 4-3 4 0v2c0-3 4-3 4 0v14l3-4c2-2 5 0 4 2l-6 10c-2 4-5 6-9 6h-4c-3 0-4-0-4 0z"/></svg><h3>Mano abierta y puño</h3><p>Golpes con el canto de la mano, codos y rodillas.</p></div>
+      <div class="pilar"><svg viewBox="0 0 48 48"><path d="M24 5l16 6v12c0 10-7 17-16 20C15 40 8 33 8 23V11z"/><path d="M17 24l5 5 9-10"/></svg><h3>Defensa personal</h3><p>Salir de agarres y situaciones reales.</p></div>
+      <div class="pilar"><svg viewBox="0 0 48 48"><circle cx="24" cy="12" r="5"/><path d="M24 17v10M16 22l8 5 8-5M18 42l6-15 6 15"/></svg><h3>Respeto y disciplina</h3><p>El saludo, la constancia y el trato a los demás.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="seccion seccion-oscura" id="tecnicas">
+  <div class="cabeza">
+    <p class="kicker">Míralo en cámara lenta</p>
+    <h2>Técnicas del Kempo</h2>
+  </div>
+  <div class="tecnicas">
+    <div class="tec-escena">
+      <canvas id="lienzo-tecnica"></canvas>
+      <p class="tec-nombre" id="tec-nombre">Guardia</p>
+    </div>
+    <div class="tec-botones" id="tec-botones">
+      <button class="tec-btn activo" data-tec="guardia"><b>Guardia</b><small>Lista para todo</small></button>
+      <button class="tec-btn" data-tec="directo"><b>Puño directo</b><small>Rápido y recto</small></button>
+      <button class="tec-btn" data-tec="cuchillo"><b>Mano de cuchillo</b><small>Golpe con el canto</small></button>
+      <button class="tec-btn" data-tec="frontal"><b>Patada frontal</b><small>Empuja y aleja</small></button>
+      <button class="tec-btn" data-tec="circular"><b>Patada circular</b><small>Alta y potente</small></button>
+      <button class="tec-btn" data-tec="bloqueo"><b>Bloqueo alto</b><small>Protege la cabeza</small></button>
+      <button class="tec-btn" data-tec="combo"><b>Combo Kempo</b><small>Todo en un segundo</small></button>
+      <button class="tec-btn" data-tec="saludo"><b>Saludo</b><small>Así empieza la clase</small></button>
+    </div>
+  </div>
+  <div class="cintas" id="cintas">
+    <p class="kicker">El camino del alumno</p>
+    <div class="cintas-fila"></div>
+  </div>
+</section>
+
+<section class="seccion" id="horario">
+  <div class="cabeza">
+    <p class="kicker">Lunes, miércoles, viernes, sábado y domingo</p>
+    <h2>Horario</h2>
+  </div>
+  <div class="filtros" id="filtros">
+    <button class="filtro activo" data-f="todos">Todos</button>
+    <button class="filtro" data-f="ninos">Niños</button>
+    <button class="filtro" data-f="jovenes">Jóvenes</button>
+    <button class="filtro" data-f="adultos">Adultos</button>
+  </div>
+  <div class="horario" id="tabla-horario"></div>
+</section>
+
+<section class="seccion seccion-juego" id="juego">
+  <div class="cabeza">
+    <p class="kicker">Gana tu cinturón negro</p>
+    <h2>Reto del Dragón</h2>
+  </div>
+  <div class="juego-marco" id="juego-marco">
+    <canvas id="lienzo-juego"></canvas>
+    <div class="juego-capa" id="juego-capa">
+      <h3 id="juego-titulo">Reto del Dragón</h3>
+      <p id="juego-texto">Las sombras llegan por los dos lados. Golpea a la que esté cerca y no falles al aire.</p>
+      <div class="juego-teclas">
+        <div><kbd>&larr;</kbd><kbd>&rarr;</kbd><span>o toca cada lado</span></div>
+        <div><kbd class="kbd-ancha">Espacio</kbd><span>suelta al dragón</span></div>
+      </div>
+      <button class="btn btn-rojo" id="juego-empezar">Empezar</button>
+      <p class="juego-record" id="juego-record"></p>
+    </div>
+    <button class="juego-dragon" id="juego-dragon" aria-label="Soltar dragón">DRAGÓN</button>
+    <button class="juego-sonido" id="juego-sonido" aria-label="Sonido">
+      <svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="ondas" d="M16 9c1.5 1.5 1.5 4.5 0 6M18.5 6.5c3 3 3 8 0 11"/></svg>
+    </button>
+  </div>
+</section>
+
+<section class="seccion seccion-oscura" id="inscripcion">
+  <div class="cabeza">
+    <p class="kicker">Te toma un minuto</p>
+    <h2>Preinscripción</h2>
+  </div>
+  <div class="inscripcion" id="ins">
+    <div class="ins-camino">
+      <div class="ins-cinta"><span id="ins-cinta-relleno"></span></div>
+      <ol class="ins-pasos" id="ins-pasos">
+        <li class="activo">Quién</li><li>Días</li><li>Meta</li><li>Datos</li><li>Listo</li>
+      </ol>
+    </div>
+    <div class="ins-cuerpo">
+      <div class="ins-paso activo" data-paso="0">
+        <h3>¿Quién va a entrenar?</h3>
+        <div class="ins-opciones ins-quien">
+          <button class="opcion" data-v="ninos"><canvas data-mini="ninos"></canvas><b>Niño o niña</b><small>5 a 11 años</small></button>
+          <button class="opcion" data-v="jovenes"><canvas data-mini="jovenes"></canvas><b>Joven</b><small>12 a 17 años</small></button>
+          <button class="opcion" data-v="adultos"><canvas data-mini="adultos"></canvas><b>Adulto</b><small>18 en adelante</small></button>
+        </div>
+      </div>
+      <div class="ins-paso" data-paso="1">
+        <h3>¿Qué días te quedan bien?</h3>
+        <p class="ins-ayuda">Toca todos los que quieras.</p>
+        <div class="ins-dias" id="ins-dias"></div>
+      </div>
+      <div class="ins-paso" data-paso="2">
+        <h3>¿Qué quieres lograr?</h3>
+        <div class="ins-opciones ins-meta">
+          <button class="opcion" data-v="Defensa personal"><svg viewBox="0 0 48 48"><path d="M24 5l16 6v12c0 10-7 17-16 20C15 40 8 33 8 23V11z"/></svg><b>Defenderme</b></button>
+          <button class="opcion" data-v="Disciplina"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="8"/><circle cx="24" cy="24" r="1.5"/></svg><b>Disciplina</b></button>
+          <button class="opcion" data-v="Condición física"><svg viewBox="0 0 48 48"><path d="M6 24h6l4-10 6 20 6-16 4 6h10"/></svg><b>Ponerme en forma</b></button>
+          <button class="opcion" data-v="Competir"><svg viewBox="0 0 48 48"><path d="M14 8h20v8c0 6-4 10-10 10s-10-4-10-10zM24 26v8M16 40h16M14 12H8c0 6 3 8 6 8M34 12h6c0 6-3 8-6 8"/></svg><b>Competir</b></button>
+        </div>
+      </div>
+      <div class="ins-paso" data-paso="3">
+        <h3>Tus datos</h3>
+        <div class="ins-form">
+          <label><span>Nombre del alumno</span><input id="ins-nombre" autocomplete="name" maxlength="40" placeholder="Escribe el nombre"></label>
+          <label><span>Edad</span><input id="ins-edad" inputmode="numeric" maxlength="2" placeholder="Años"></label>
+          <label><span>Teléfono</span><input id="ins-tel" inputmode="tel" maxlength="12" placeholder="8 dígitos"></label>
+        </div>
+        <button class="btn btn-rojo" id="ins-listo">Crear mi pase</button>
+      </div>
+      <div class="ins-paso" data-paso="4">
+        <div class="pase" id="pase">
+          <canvas id="pase-lienzo" width="720" height="420"></canvas>
+        </div>
+        <div class="ins-final">
+          <a class="btn btn-verde" id="ins-whatsapp" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+          <button class="btn btn-borde" id="ins-bajar">Guardar pase</button>
+          <button class="btn btn-texto" id="ins-otra">Inscribir a alguien más</button>
+        </div>
+      </div>
+      <div class="ins-nav">
+        <button class="btn btn-texto" id="ins-atras">Atrás</button>
+        <span class="ins-elegido" id="ins-elegido"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="seccion" id="contacto">
+  <div class="contacto">
+    <div class="contacto-txt">
+      <p class="kicker">Te esperamos</p>
+      <h2>Visítanos</h2>
+      <ul class="datos">
+        <li><svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 10-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Calle Principal 4-25, zona 1<br>San José Pinula, Guatemala</span></li>
+        <li><svg viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2c1 3 3 5 6 6l2-3 5 2v4c0 1-1 2-2 2C10 21 3 14 3 5c0-1 1-2 2-2z"/></svg><a href="tel:+50255552580">+502 5555 2580</a></li>
+        <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Lunes, miércoles, viernes, sábado y domingo</span></li>
+      </ul>
+      <div class="contacto-btns">
+        <a class="btn btn-verde" href="https://wa.me/50255552580?text=Hola%2C%20quiero%20informaci%C3%B3n%20de%20las%20clases%20de%20Kempo" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+        <a class="btn btn-borde" href="https://www.google.com/maps/search/?api=1&query=San+Jos%C3%A9+Pinula+Guatemala" target="_blank" rel="noopener">Abrir en Maps</a>
+      </div>
+    </div>
+    <div class="mapa">
+      <iframe title="Mapa de San José Pinula" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=San+Jos%C3%A9+Pinula,+Guatemala&z=14&output=embed"></iframe>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="pie">
+  <svg class="logo-pie" data-logo viewBox="0 0 200 200" aria-hidden="true"></svg>
+  <p><b>Ordóñez Team Kempo Karate</b><br>Kempo Karate Hawaiano en San José Pinula</p>
+  <p class="pie-kanji" aria-hidden="true">礼 心 技 体</p>
+</footer>
+
+<script src="js/vivo.js"></script>
+<script src="js/figura.js"></script>
+<script src="js/dragon.js"></script>
+<script src="js/portada.js"></script>
+<script src="js/juego.js"></script>
+<script src="js/inscripcion.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
