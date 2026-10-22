@@ -618,12 +618,30 @@
   }
 
   // Lienzo nitido en pantallas de alta densidad
+  // El tamano se guarda y lo actualiza un ResizeObserver, asi el bucle de
+  // dibujo nunca obliga al navegador a recalcular la pagina en cada cuadro.
+  const medidas = new WeakMap();
+  const vigia = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => {
+    es.forEach(e => {
+      const m = medidas.get(e.target);
+      if (m) { m.w = e.contentRect.width; m.h = e.contentRect.height; m.sucio = true; }
+    });
+  }) : null;
   function ajustar(cv) {
-    const r = cv.getBoundingClientRect();
-    const d = Math.min(devicePixelRatio || 1, 2);
-    const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
-    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-    return { w: r.width, h: r.height, d };
+    let m = medidas.get(cv);
+    if (!m || !vigia) {
+      const r = cv.getBoundingClientRect();
+      m = { w: r.width, h: r.height, sucio: true };
+      medidas.set(cv, m);
+      if (vigia) vigia.observe(cv);
+    }
+    if (m.sucio) {
+      const d = Math.min(devicePixelRatio || 1, 2);
+      const w = Math.max(1, Math.round(m.w * d)), h = Math.max(1, Math.round(m.h * d));
+      if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+      m.d = d; m.sucio = false;
+    }
+    return { w: m.w, h: m.h, d: m.d };
   }
 
   window.Figura = { POSES, mezcla, dibujar, huesos, Animador, respira, ajustar };

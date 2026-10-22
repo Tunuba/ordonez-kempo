@@ -2,26 +2,52 @@
 // la pagina, las figuras de las clases y la escena de tecnicas.
 (function () {
   const F = window.Figura;
+  // Que lienzos se ven, lo avisa un IntersectionObserver sin medir en cada cuadro
+  const visibles = new WeakMap();
+  const ojo = new IntersectionObserver(es => es.forEach(e => visibles.set(e.target, e.isIntersecting)), { rootMargin: '60px' });
   const enPantalla = (el) => {
-    if (!el || el.offsetParent === null) return false;
-    const r = el.getBoundingClientRect();
-    return r.bottom > 0 && r.top < innerHeight && r.width > 0;
+    if (!el) return false;
+    if (!visibles.has(el)) { visibles.set(el, false); ojo.observe(el); }
+    return visibles.get(el);
   };
+  // Dibujos hechos una vez en lienzos aparte, luego solo se copian
+  function lienzo(w, h) {
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h));
+    return c;
+  }
+  const SPRITE_FUEGO = (() => {
+    const c = lienzo(128, 128), x = c.getContext('2d');
+    const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,240,180,1)'); g.addColorStop(.5, 'rgba(255,120,30,.7)'); g.addColorStop(1, 'rgba(200,30,10,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    return c;
+  })();
+  window.SPRITE_FUEGO = SPRITE_FUEGO;
+  const SPRITE_FLOR = (() => {
+    const c = lienzo(64, 64), x = c.getContext('2d');
+    x.translate(32, 32);
+    const r = 28;
+    for (let i = 0; i < 5; i++) {
+      x.rotate(Math.PI * 2 / 5);
+      x.beginPath(); x.moveTo(0, 0);
+      x.bezierCurveTo(r * .2, -r * .5, r * 1.1, -r * .7, r * 1.05, -r * .1);
+      x.bezierCurveTo(r * .9, r * .2, r * .3, r * .15, 0, 0);
+      x.fillStyle = '#fff6e8'; x.fill();
+    }
+    x.beginPath(); x.arc(0, 0, r * .28, 0, Math.PI * 2); x.fillStyle = '#f4c542'; x.fill();
+    return c;
+  })();
   const azar = (a, b) => a + Math.random() * (b - a);
 
   // Flor de plumeria, la flor de Hawai
   function plumeria(ctx, x, y, r, giro, alfa) {
-    ctx.save(); ctx.translate(x, y); ctx.rotate(giro); ctx.globalAlpha = alfa;
-    for (let i = 0; i < 5; i++) {
-      ctx.rotate(Math.PI * 2 / 5);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.bezierCurveTo(r * .2, -r * .5, r * 1.1, -r * .7, r * 1.05, -r * .1);
-      ctx.bezierCurveTo(r * .9, r * .2, r * .3, r * .15, 0, 0);
-      ctx.fillStyle = '#fff6e8'; ctx.fill();
-    }
-    ctx.beginPath(); ctx.arc(0, 0, r * .28, 0, Math.PI * 2); ctx.fillStyle = '#f4c542'; ctx.fill();
-    ctx.restore();
+    const c = Math.cos(giro), sn = Math.sin(giro), k = r / 28;
+    ctx.globalAlpha = alfa;
+    ctx.setTransform(D * c * k, D * sn * k, -D * sn * k, D * c * k, D * x, D * y);
+    ctx.drawImage(SPRITE_FLOR, -32, -32);
+    ctx.setTransform(D, 0, 0, D, 0, 0);
+    ctx.globalAlpha = 1;
   }
 
   // Volcanes de Guatemala al fondo
@@ -69,6 +95,7 @@
       { v: volcanes(W, fy + 2, 21, H * .2), c: '#1c0b0a', k: .05 },
       { v: volcanes(W, fy + 6, 43, H * .11), c: '#110807', k: .09 }
     ];
+    hornear();
     dragon.ancho = 19 * esc; dragon.sep = 6.6 * esc;
     if (!dragon.puntos.length) {
       // nace ya enroscado, se simulan unos segundos de vuelo
@@ -78,6 +105,65 @@
     }
     while (petalos.length < (tel ? 14 : 26)) petalos.push(nuevoPetalo(true));
   }
+  // Sol, enso, volcanes, piso y brillo del karateka se dibujan una sola vez
+  let capaSol = null, capaEnso = null, capaPiso = null, capaBrillo = null, sr = 0;
+  function hornear() {
+    const alto = 210 * esc;
+    sr = Math.min(W, H) * (W < 760 ? .36 : .34);
+    const R2 = sr * 1.8;
+    capaSol = lienzo(R2 * 2 * D, R2 * 2 * D);
+    let x = capaSol.getContext('2d');
+    x.scale(D, D); x.translate(R2, R2);
+    const halo = x.createRadialGradient(0, 0, sr, 0, 0, R2);
+    halo.addColorStop(0, 'rgba(255,90,40,.28)'); halo.addColorStop(1, 'rgba(255,90,40,0)');
+    x.fillStyle = halo; x.beginPath(); x.arc(0, 0, R2, 0, Math.PI * 2); x.fill();
+    const g = x.createRadialGradient(0, 0, sr * .1, 0, 0, sr);
+    g.addColorStop(0, '#ff7a45'); g.addColorStop(.55, '#e2321f'); g.addColorStop(.98, '#a5160f'); g.addColorStop(1, 'rgba(165,22,15,0)');
+    x.fillStyle = g; x.beginPath(); x.arc(0, 0, sr, 0, Math.PI * 2); x.fill();
+    x.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 6; i++) x.fillRect(-sr, sr * (.25 + i * .14), sr * 2, 2 + i * 2.2);
+    x.globalCompositeOperation = 'source-over';
+    const RE = sr * 1.08 + 6;
+    capaEnso = lienzo(RE * 2 * D, RE * 2 * D);
+    x = capaEnso.getContext('2d');
+    x.scale(D, D); x.translate(RE, RE);
+    for (let i = 0; i < 60; i++) {
+      const a0 = i / 60 * Math.PI * 1.75, a1 = (i + 1.3) / 60 * Math.PI * 1.75;
+      x.beginPath(); x.arc(0, 0, sr * 1.08, a0, a1);
+      x.strokeStyle = `rgba(232,176,74,${.15 + .5 * Math.sin(i / 60 * Math.PI)})`;
+      x.lineWidth = 1 + 6 * Math.sin(i / 60 * Math.PI); x.stroke();
+    }
+    capas.forEach(c => {
+      const m = W * c.k * .5 + 70;
+      c.lienzo = lienzo((W + m * 2) * D, H * D);
+      c.margen = m;
+      const y = c.lienzo.getContext('2d');
+      y.scale(D, D); y.translate(m, 0);
+      y.beginPath(); c.v.pts.forEach((p, j) => j ? y.lineTo(p[0], p[1]) : y.moveTo(p[0], p[1]));
+      y.lineTo(W + 60, H); y.lineTo(-60, H); y.closePath();
+      y.fillStyle = c.c; y.fill();
+    });
+    capaPiso = lienzo(W * D, Math.max(1, (H - fy)) * D);
+    x = capaPiso.getContext('2d');
+    x.scale(D, D);
+    const pg = x.createLinearGradient(0, 0, 0, H - fy);
+    pg.addColorStop(0, '#120807'); pg.addColorStop(1, '#0c0a0b');
+    x.fillStyle = pg; x.fillRect(0, 6, W, H - fy);
+    const rf = x.createRadialGradient(fx, 8, 0, fx, 8, W * .35);
+    rf.addColorStop(0, 'rgba(255,90,40,.25)'); rf.addColorStop(1, 'rgba(255,90,40,0)');
+    x.fillStyle = rf; x.fillRect(0, 6, W, H - fy);
+    x.fillStyle = 'rgba(0,0,0,.55)';
+    x.beginPath(); x.ellipse(fx, 6, 70 * esc, 9 * esc, 0, 0, Math.PI * 2); x.fill();
+    const RB = alto * .75;
+    capaBrillo = lienzo(RB * 2 * D, RB * 2 * D);
+    x = capaBrillo.getContext('2d');
+    const gb = x.createRadialGradient(RB * D, RB * D, 0, RB * D, RB * D, RB * D);
+    gb.addColorStop(0, 'rgba(255,170,80,.35)'); gb.addColorStop(.55, 'rgba(255,120,40,.12)'); gb.addColorStop(1, 'rgba(255,120,40,0)');
+    x.fillStyle = gb; x.fillRect(0, 0, RB * 2 * D, RB * 2 * D);
+    capaBrillo.radio = RB;
+  }
+  const copiar = (c, l, x, y, w, h) => c.drawImage(l, x, y, w, h);
+
   // camino en espiral alrededor del karateka, z positivo pasa por delante
   function orbita(th) {
     const alto = 210 * esc;
@@ -121,58 +207,30 @@
     ctx.clearRect(0, 0, W, H);
     const px = (mx - .5), py = (my - .5);
     const alto = 210 * esc;
-    // sol
-    const sx = fx - px * 20, sy = fy - alto * .62 - py * 12, sr = Math.min(W, H) * (W < 760 ? .36 : .34);
-    const g = ctx.createRadialGradient(sx, sy, sr * .1, sx, sy, sr);
-    g.addColorStop(0, '#ff7a45'); g.addColorStop(.55, '#e2321f'); g.addColorStop(.98, '#a5160f'); g.addColorStop(1, 'rgba(165,22,15,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
-    const halo = ctx.createRadialGradient(sx, sy, sr, sx, sy, sr * 1.8);
-    halo.addColorStop(0, 'rgba(255,90,40,.28)'); halo.addColorStop(1, 'rgba(255,90,40,0)');
-    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(sx, sy, sr * 1.8, 0, Math.PI * 2); ctx.fill();
-    // rayas sobre la parte baja del sol
-    ctx.fillStyle = '#1a0b0a';
-    for (let i = 0; i < 6; i++) {
-      const yy = sy + sr * (.25 + i * .14), hh = 2 + i * 2.2;
-      ctx.fillRect(sx - sr, yy, sr * 2, hh);
-    }
-    // enso de pincel dorado girando
+    // sol, enso y volcanes ya hechos, solo se copian
+    const sx = fx - px * 20, sy = fy - alto * .62 - py * 12;
+    const R2 = sr * 1.8;
+    copiar(ctx, capaSol, sx - R2, sy - R2, R2 * 2, R2 * 2);
+    const RE = sr * 1.08 + 6;
     ctx.save(); ctx.translate(sx, sy); ctx.rotate(tiempo * .12);
-    for (let i = 0; i < 60; i++) {
-      const a0 = i / 60 * Math.PI * 1.75, a1 = (i + 1.3) / 60 * Math.PI * 1.75;
-      ctx.beginPath(); ctx.arc(0, 0, sr * 1.08, a0, a1);
-      ctx.strokeStyle = `rgba(232,176,74,${.15 + .5 * Math.sin(i / 60 * Math.PI)})`;
-      ctx.lineWidth = 1 + 6 * Math.sin(i / 60 * Math.PI); ctx.stroke();
-    }
+    copiar(ctx, capaEnso, -RE, -RE, RE * 2, RE * 2);
     ctx.restore();
-    // volcanes y humo del de Fuego
     capas.forEach((c, i) => {
-      ctx.save(); ctx.translate(-px * W * c.k, -py * 10 * c.k * 10);
-      ctx.beginPath(); c.v.pts.forEach((p, j) => j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
-      ctx.lineTo(W + 60, H); ctx.lineTo(-60, H); ctx.closePath();
-      ctx.fillStyle = c.c; ctx.fill();
+      const ox = -px * W * c.k, oy = -py * 10 * c.k * 10;
+      copiar(ctx, c.lienzo, ox - c.margen, oy, W + c.margen * 2, H);
       if (i === 0) {
         const p = c.v.picos.reduce((a, b) => b.h > a.h ? b : a);
         for (let k = 0; k < 7; k++) {
           const f = (tiempo * .08 + k / 7) % 1;
-          ctx.beginPath(); ctx.arc(p.x - p.a * .01 + f * 60 + Math.sin(f * 6 + k) * 8, fy - 4 - p.h - f * 90, 6 + f * 22, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(ox + p.x - p.a * .01 + f * 60 + Math.sin(f * 6 + k) * 8, oy + fy - 4 - p.h - f * 90, 6 + f * 22, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(90,40,30,${.35 * (1 - f)})`; ctx.fill();
         }
       }
-      ctx.restore();
     });
-    // piso con reflejo
-    const pg = ctx.createLinearGradient(0, fy, 0, H);
-    pg.addColorStop(0, '#120807'); pg.addColorStop(1, '#0c0a0b');
-    ctx.fillStyle = pg; ctx.fillRect(0, fy + 6, W, H - fy);
-    const rf = ctx.createRadialGradient(fx, fy + 8, 0, fx, fy + 8, W * .35);
-    rf.addColorStop(0, 'rgba(255,90,40,.25)'); rf.addColorStop(1, 'rgba(255,90,40,0)');
-    ctx.fillStyle = rf; ctx.fillRect(0, fy + 6, W, H - fy);
+    copiar(ctx, capaPiso, 0, fy, W, H - fy);
     // chispas
     chispas.forEach(c => { ctx.globalAlpha = c.v; ctx.fillStyle = '#ffb347'; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill(); });
     ctx.globalAlpha = 1;
-    // sombra en el piso
-    ctx.fillStyle = 'rgba(0,0,0,.55)';
-    ctx.beginPath(); ctx.ellipse(fx, fy + 6, 70 * esc, 9 * esc, 0, 0, Math.PI * 2); ctx.fill();
 
     const prof = (z) => .82 + .22 * (z + 1) / 2;
     // la perla va un poco adelante de la cabeza
@@ -182,20 +240,19 @@
     // dragon por detras
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z < 0, prof });
     // karateka en tinta con borde dorado
-    ctx.save();
-    ctx.shadowColor = 'rgba(255,150,60,.6)'; ctx.shadowBlur = 12 * D;
+    const RB = capaBrillo.radio;
+    copiar(ctx, capaBrillo, fx - RB, fy - alto * .5 - RB, RB * 2, RB * 2);
     F.dibujar(ctx, pose, { x: fx, suelo: fy + 6, escala: esc, mira: 1, cinta: '#141012', vincha: '#d7261e', tiempo, viento: .6 + rugido });
-    ctx.restore();
     // dragon por delante
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z >= 0, prof });
     if (pq[2] >= 0) perla();
     // fuego
     ctx.globalCompositeOperation = 'lighter';
     fuego.forEach(f => {
-      const gr = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-      gr.addColorStop(0, `rgba(255,240,180,${f.v})`); gr.addColorStop(.5, `rgba(255,120,30,${f.v * .7})`); gr.addColorStop(1, 'rgba(200,30,10,0)');
-      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = Math.max(0, f.v);
+      ctx.drawImage(SPRITE_FUEGO, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
     });
+    ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     // ondas del toque
     ondas.forEach(o => {
@@ -236,13 +293,13 @@
   const volador = new Dragon({ n: 64, sep: 8, ancho: 24, estilo: 'oro' });
   const V = { estado: 'fuera', espera: 2.5, x: 0, y: 0, dir: 1, base: 0, f: 0, vel: 420, meta: null, vueltas: 0, ang: 0 };
   let vW = 0, vH = 0, vD = 1;
-  function medirVuelo() { const m = F.ajustar(vuelo); vW = m.w; vH = m.h; vD = m.d; }
+  function medirVuelo() { const m = F.ajustar(vuelo); vW = m.w; vH = m.h; vD = m.d; vueloSucio = true; }
   function pasada(rapida) {
     V.estado = 'pasada';
     V.dir = Math.random() < .5 ? 1 : -1;
     V.x = V.dir > 0 ? -80 : vW + 80;
     V.base = azar(vH * .22, vH * .78);
-    V.f = azar(0, 6); V.vel = rapida ? 900 : azar(360, 480);
+    V.f = azar(0, 6); V.vel = rapida ? 760 : azar(300, 380);
     volador.estilo = Math.random() < .5 ? 'oro' : 'blanco';
     const t = Math.min(1.25, Math.max(.75, vW / 1200));
     volador.ancho = (rapida ? 30 : 24) * t; volador.sep = (rapida ? 10 : 8) * t;
@@ -309,9 +366,9 @@
       const l = llamas[i];
       l.x += l.vx * dt; l.y += l.vy * dt; l.vx *= 1 - dt * 1.2; l.vy *= 1 - dt * 1.2; l.r *= 1 + dt * 2.6; l.v -= dt * 1.5;
       if (l.v <= 0) { llamas.splice(i, 1); continue; }
-      const g = vctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r);
-      g.addColorStop(0, `rgba(255,245,200,${l.v})`); g.addColorStop(.45, `rgba(255,140,40,${l.v * .8})`); g.addColorStop(1, 'rgba(210,30,10,0)');
-      vctx.fillStyle = g; vctx.beginPath(); vctx.arc(l.x, l.y, l.r, 0, Math.PI * 2); vctx.fill();
+      vctx.globalAlpha = Math.max(0, l.v);
+      vctx.drawImage(SPRITE_FUEGO, l.x - l.r, l.y - l.r, l.r * 2, l.r * 2);
+      vctx.globalAlpha = 1;
     }
     vctx.globalCompositeOperation = 'source-over';
   }
@@ -327,7 +384,7 @@
     if (V.estado === 'pasada') {
       V.f += dt;
       V.x += V.dir * V.vel * dt;
-      V.y = V.base + Math.sin(V.f * 4.6) * 80 + Math.sin(V.f * 1.3) * 50;
+      V.y = V.base + Math.sin(V.f * 1.25) * 70 + Math.sin(V.f * .55) * 40;
       volador.mover(V.x, V.y, 0, dt);
       volador.boca += ((Math.sin(V.f * 1.7) > .8 ? 1.1 : 0) - volador.boca) * Math.min(1, dt * 8);
       const cola = volador.n * volador.sep + 120;
@@ -350,7 +407,11 @@
     }
     return true;
   }
+  let vueloSucio = true;
   function dibujarVuelo(dt) {
+    const hay = V.estado !== 'fuera' || llamas.length || golpes.length;
+    if (!hay && !vueloSucio) return;
+    vueloSucio = hay;
     vctx.setTransform(vD, 0, 0, vD, 0, 0);
     vctx.clearRect(0, 0, vW, vH);
     if (V.estado !== 'fuera') volador.dibujar(vctx, {});
@@ -540,14 +601,14 @@
     ultimo = ahora;
     if (!document.hidden) {
       if (enPantalla(cv)) {
-        if (cv.width !== Math.round(cv.getBoundingClientRect().width * Math.min(devicePixelRatio || 1, 2))) medir();
+        const m = F.ajustar(cv);
+        if (m.w !== W || m.h !== H) medir();
         const pose = pasoPortada(dt);
         moverParticulas(dt);
         dibujarPortada(pose);
       }
       mini.forEach(m => pasoMini(m, dt));
       pasoTecnica(dt);
-      if (vuelo.width !== Math.round(innerWidth * Math.min(devicePixelRatio || 1, 2))) medirVuelo();
       pasoVuelo(dt);
       dibujarVuelo(dt);
     }

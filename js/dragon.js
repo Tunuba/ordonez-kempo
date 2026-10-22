@@ -136,9 +136,10 @@
     const Q = P0.map((p, i) => {
       const s = i / (N - 1);
       const env = Math.min(1, s / .18) * (1 - s * .3);
-      const fase = this.recorrido / (this.sep * 9) * Math.PI * 2 + t * 1.6;
-      const amp = W * (.18 + Math.min(.3, this.rapidez / 2400));
-      const off = Math.sin(fase - i * .34) * amp * env;
+      // onda larga y lenta, vuela como dragon, no culebrea
+      const fase = this.recorrido / (this.sep * 26) * Math.PI * 2 + t * .9;
+      const amp = W * (.07 + Math.min(.1, this.rapidez / 5000));
+      const off = Math.sin(fase - i * .16) * amp * env;
       return { x: p.x - tan[i][1] * off, y: p.y + tan[i][0] * off, z: p.z };
     });
     // normales finales, la normal "n" apunta al lomo
@@ -269,28 +270,32 @@
       ctx.beginPath(); ctx.moveTo(lomo(a, 1)[0], lomo(a, 1)[1]);
       for (let i = a + 1; i <= b; i++) ctx.lineTo(lomo(i, 1)[0], lomo(i, 1)[1]);
       ctx.strokeStyle = E.oscuro; ctx.lineWidth = W * .38; ctx.stroke();
-      // placas de la panza
+      // placas de la panza, una sola franja y un solo trazo para las lineas
+      ctx.beginPath();
+      let p0 = lomo(a, -1.05); ctx.moveTo(p0[0], p0[1]);
+      for (let i = a + 1; i <= b; i++) { const q = lomo(i, -1.05); ctx.lineTo(q[0], q[1]); }
+      for (let i = b; i >= a; i--) { const q = lomo(i, -.25); ctx.lineTo(q[0], q[1]); }
+      ctx.closePath(); ctx.fillStyle = E.placa; ctx.fill();
+      ctx.beginPath();
       for (let i = a; i <= b; i++) {
         const v1 = lomo(i, -1.05), v2 = lomo(i, -.25);
-        const i2 = Math.min(N - 1, i + 1);
-        const w1 = lomo(i2, -1.05), w2 = lomo(i2, -.25);
-        ctx.beginPath(); ctx.moveTo(v1[0], v1[1]); ctx.lineTo(v2[0], v2[1]); ctx.lineTo(w2[0], w2[1]); ctx.lineTo(w1[0], w1[1]); ctx.closePath();
-        ctx.fillStyle = E.placa; ctx.fill();
-        ctx.beginPath(); ctx.moveTo(v1[0], v1[1]);
+        ctx.moveTo(v1[0], v1[1]);
         ctx.quadraticCurveTo((v1[0] + v2[0]) / 2 + tan[i][0] * ww[i] * .12, (v1[1] + v2[1]) / 2 + tan[i][1] * ww[i] * .12, v2[0], v2[1]);
-        ctx.strokeStyle = E.placaLinea; ctx.lineWidth = Math.max(.8, W * .05); ctx.stroke();
       }
-      // escamas en media luna, en filas
-      ctx.strokeStyle = E.escama; ctx.lineWidth = Math.max(.7, W * .045);
+      ctx.strokeStyle = E.placaLinea; ctx.lineWidth = Math.max(.8, W * .05); ctx.stroke();
+      // escamas en media luna, en filas, todas en un trazo
+      ctx.beginPath();
       for (let i = a; i <= b; i++) {
         const r = ww[i] * .2;
         if (r < 1.2) continue;
         const ang = Math.atan2(tan[i][1], tan[i][0]);
         for (const k of (i % 2 ? [-.05, .45, .9] : [.2, .68])) {
           const c = lomo(i, k);
-          ctx.beginPath(); ctx.arc(c[0], c[1], r, ang - 1.25, ang + 1.25); ctx.stroke();
+          ctx.moveTo(c[0] + Math.cos(ang - 1.25) * r, c[1] + Math.sin(ang - 1.25) * r);
+          ctx.arc(c[0], c[1], r, ang - 1.25, ang + 1.25);
         }
       }
+      ctx.strokeStyle = E.escama; ctx.lineWidth = Math.max(.7, W * .045); ctx.stroke();
       // brillo a lo largo
       ctx.beginPath(); ctx.moveTo(lomo(a, .45)[0], lomo(a, .45)[1]);
       for (let i = a + 1; i <= b; i++) ctx.lineTo(lomo(i, .45)[0], lomo(i, .45)[1]);
