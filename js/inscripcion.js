@@ -225,8 +225,11 @@
   // Paso 4, pase y envio
   function armarWhatsApp() {
     const g = GRUPOS[est.quien] || GRUPOS.adultos;
+    // dias en palabras, lunes y sabado, o lunes, miercoles y viernes
+    const dias = [...est.dias].map(d => d.toLowerCase());
+    const enLista = dias.length > 1 ? dias.slice(0, -1).join(', ') + ' y ' + dias[dias.length - 1] : (dias[0] || '');
     const msj = `Hola, quiero preinscribir a ${est.nombre}, de ${est.edad} años, en la clase de ${g.corto} de Kempo. ` +
-      `Días ${[...est.dias].join(', ')}. Su meta es ${est.meta ? est.meta.toLowerCase() : 'aprender'}. Mi teléfono es ${est.tel.slice(0, 4)} ${est.tel.slice(4)}. ` +
+      `Puede venir ${enLista}. Su meta es ${est.meta ? est.meta.toLowerCase() : 'aprender'}. Mi teléfono es ${est.tel.slice(0, 4)} ${est.tel.slice(4)}. ` +
       `Quiero mi primera clase gratis.`;
     document.getElementById('ins-whatsapp').href = 'https://wa.me/50244879446?text=' + encodeURIComponent(msj);
   }

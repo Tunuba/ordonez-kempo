@@ -397,7 +397,7 @@
     dragon = { d, dir, t: 0, x: x0 };
     SON.rugido();
     sacudida = 10;
-    flotar(cx, H * .22, 'DRAGÓN', '#ffd27a', 60);
+    flotar(cx, H * .36, 'DRAGÓN', '#ffd27a', 60);
   }
 
   // ---------- Partida ----------
@@ -458,6 +458,11 @@
     const r = cv.getBoundingClientRect();
     atacar(e.clientX - r.left < r.width / 2 ? -1 : 1);
   });
+
+  // Solo en la PC de desarrollo, para que las pruebas vean el estado del juego
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+    window.__juego = () => ({ modo, cx, alcance, ki, kos, cinta, vidas, puntos, enemigos: enemigos.map(e => ({ x: e.x, estado: e.estado })) });
+  }
 
   // ---------- Bucle ----------
   let enPantalla = true;

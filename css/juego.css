@@ -6,7 +6,8 @@
   background: linear-gradient(180deg, transparent, rgba(255,255,255,.08) 30%, rgba(255,255,255,.08) 70%, transparent);
   opacity: 0; transition: opacity .4s;
 }
-.juego-marco.jugando::after { opacity: 1; }
+/* la raya que parte los dos lados solo ayuda en pantallas tactiles */
+@media (hover: none) { .juego-marco.jugando::after { opacity: 1; } }
 .juego-capa h3 { text-shadow: 0 6px 30px rgba(215,38,30,.6); }
 .juego-capa .btn { min-width: 200px; }
 .juego-dragon { z-index: 2; }
