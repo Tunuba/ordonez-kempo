@@ -69,7 +69,7 @@
       { v: volcanes(W, fy + 2, 21, H * .2), c: '#1c0b0a', k: .05 },
       { v: volcanes(W, fy + 6, 43, H * .11), c: '#110807', k: .09 }
     ];
-    dragon.ancho = 17 * esc; dragon.sep = 6.4 * esc;
+    dragon.ancho = 21 * esc; dragon.sep = 6.6 * esc;
     if (!dragon.puntos.length) {
       // nace ya enroscado, se simulan unos segundos de vuelo
       const o = orbita(theta - 6);
@@ -175,6 +175,10 @@
     ctx.beginPath(); ctx.ellipse(fx, fy + 6, 70 * esc, 9 * esc, 0, 0, Math.PI * 2); ctx.fill();
 
     const prof = (z) => .82 + .22 * (z + 1) / 2;
+    // la perla va un poco adelante de la cabeza
+    const pq = orbita(theta + .42);
+    const perla = () => Dragon.perla(ctx, pq[0] + (mx - .5) * 30, pq[1] + (my - .5) * 20, 7 * esc * prof(pq[2]), tiempo);
+    if (pq[2] < 0) perla();
     // dragon por detras
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z < 0, prof });
     // karateka en tinta con borde dorado
@@ -184,6 +188,7 @@
     ctx.restore();
     // dragon por delante
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z >= 0, prof });
+    if (pq[2] >= 0) perla();
     // fuego
     ctx.globalCompositeOperation = 'lighter';
     fuego.forEach(f => {
@@ -228,7 +233,7 @@
   vuelo.setAttribute('aria-hidden', 'true');
   document.body.appendChild(vuelo);
   const vctx = vuelo.getContext('2d');
-  const volador = new Dragon({ n: 64, sep: 8, ancho: 20, estilo: 'oro' });
+  const volador = new Dragon({ n: 64, sep: 8, ancho: 24, estilo: 'oro' });
   const V = { estado: 'fuera', espera: 2.5, x: 0, y: 0, dir: 1, base: 0, f: 0, vel: 420, meta: null, vueltas: 0, ang: 0 };
   let vW = 0, vH = 0, vD = 1;
   function medirVuelo() { const m = F.ajustar(vuelo); vW = m.w; vH = m.h; vD = m.d; }
@@ -240,7 +245,7 @@
     V.f = azar(0, 6); V.vel = rapida ? 900 : azar(360, 480);
     volador.estilo = Math.random() < .5 ? 'oro' : 'blanco';
     const t = Math.min(1.25, Math.max(.75, vW / 1200));
-    volador.ancho = (rapida ? 26 : 20) * t; volador.sep = (rapida ? 10 : 8) * t;
+    volador.ancho = (rapida ? 30 : 24) * t; volador.sep = (rapida ? 10 : 8) * t;
     V.y = V.base;
     volador.colocar(V.x, V.y, V.dir > 0 ? 0 : Math.PI);
   }
