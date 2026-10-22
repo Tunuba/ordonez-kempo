@@ -183,7 +183,7 @@
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z < 0, prof });
     // karateka en tinta con borde dorado
     ctx.save();
-    ctx.shadowColor = 'rgba(255,150,60,.75)'; ctx.shadowBlur = 22 * D;
+    ctx.shadowColor = 'rgba(255,150,60,.6)'; ctx.shadowBlur = 12 * D;
     F.dibujar(ctx, pose, { x: fx, suelo: fy + 6, escala: esc, mira: 1, cinta: '#141012', vincha: '#d7261e', tiempo, viento: .6 + rugido });
     ctx.restore();
     // dragon por delante

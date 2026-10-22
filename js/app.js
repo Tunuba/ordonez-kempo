@@ -61,12 +61,19 @@
   document.querySelectorAll('.portada h1 > span').forEach((sp, j) => {
     const txt = sp.textContent;
     sp.textContent = '';
-    [...txt].forEach((c, i) => {
-      const l = document.createElement('i');
-      l.className = 'letra';
-      l.textContent = c === ' ' ? ' ' : c;
-      l.style.animationDelay = (j * .35 + i * .045) + 's';
-      sp.appendChild(l);
+    let i = 0;
+    txt.split(' ').forEach((pal, w) => {
+      if (w) sp.appendChild(document.createTextNode(' '));
+      const caja = document.createElement('span');
+      caja.className = 'palabra';
+      [...pal].forEach(c => {
+        const l = document.createElement('i');
+        l.className = 'letra';
+        l.textContent = c;
+        l.style.animationDelay = (j * .35 + i++ * .045) + 's';
+        caja.appendChild(l);
+      });
+      sp.appendChild(caja);
     });
   });
 
