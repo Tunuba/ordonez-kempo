@@ -413,7 +413,7 @@
       volador.mover(V.x, V.y, 0, dt);
       volador.boca += ((Math.sin(V.f * 1.7) > .8 ? 1.1 : 0) - volador.boca) * Math.min(1, dt * 8);
       const cola = volador.n * volador.sep + 120;
-      if ((V.dir > 0 && V.x > vW + cola) || (V.dir < 0 && V.x < -cola)) { V.estado = 'fuera'; V.espera = azar(6, 11); }
+      if ((V.dir > 0 && V.x > vW + cola) || (V.dir < 0 && V.x < -cola)) { V.estado = 'fuera'; V.espera = vW < 760 ? azar(14, 24) : azar(6, 11); }
     } else if (V.estado === 'llamado') {
       // va hacia el toque, da una vuelta y se va
       const m = V.meta;
