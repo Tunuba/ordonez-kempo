@@ -232,6 +232,8 @@ h2 { font-size: clamp(44px, 5.6vw, 88px); font-weight: 900; text-transform: uppe
 .pilar { padding: 22px; border-radius: var(--radio); background: var(--tinta-2); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); transition: transform .3s, background .3s; }
 .pilar:hover { transform: translateY(-4px) rotate(-1deg); background: #2a1715; }
 .pilar svg { width: 46px; height: 46px; fill: none; stroke: var(--rojo-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 12px; }
+.pilar-kanji { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 12px; border-radius: 14px; font-family: var(--kanji); font-size: 2.1rem; line-height: 1; color: #fff; background: linear-gradient(140deg, var(--rojo-2), #8e140f); box-shadow: 0 10px 24px -10px rgba(215,38,30,.8); transition: transform .35s cubic-bezier(.2,.9,.3,1.4); }
+.pilar:hover .pilar-kanji { transform: rotate(-8deg) scale(1.08); }
 .pilar h3 { font-size: 1.5rem; text-transform: uppercase; margin-bottom: 6px; }
 .pilar p { margin: 0; font-size: .95rem; color: var(--gris); }
 
