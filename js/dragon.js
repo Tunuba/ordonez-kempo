@@ -33,6 +33,9 @@
     this.t = 0;
     this.lado = 1;      // lado del lomo, se mueve suave entre -1 y 1
     this.ladoMeta = 1;
+    this.recorrido = 0; // distancia que avanzo la cabeza, mueve la onda del cuerpo
+    this.rapidez = 0;
+    this.angCab = null; // la cabeza gira con algo de retraso, como un cuello de verdad
   }
 
   Dragon.prototype.mover = function (x, y, z, dt) {
@@ -40,6 +43,11 @@
     this.t += dt;
     const h = this.hist;
     const u = h[0];
+    if (u) {
+      const d = Math.hypot(x - u.x, y - u.y);
+      this.recorrido += d;
+      if (dt > 0) this.rapidez += (d / dt - this.rapidez) * Math.min(1, dt * 4);
+    }
     if (!u || Math.hypot(x - u.x, y - u.y) > 0.6) h.unshift({ x, y, z: z || 0 });
     else u.z = z || 0;
     let largo = 0;
@@ -77,11 +85,14 @@
     this.mover(x, y, 0, 0);
   };
 
+  // grosor a lo largo del cuerpo, cuello fino, pecho ancho, cadera y cola larga
   function perfil(s) {
-    if (s < .04) return .62;
-    if (s < .12) return .62 + (s - .04) / .08 * .38;
-    if (s < .42) return 1 - (s - .12) * .2;
-    return Math.max(.07, .94 * Math.pow((1 - s) / .58, .9));
+    const k = (a, b, x) => Math.max(0, Math.min(1, (x - a) / (b - a)));
+    const suave = (x) => x * x * (3 - 2 * x);
+    let w = .58 + .42 * suave(k(.02, .16, s));          // cuello a pecho
+    w -= .12 * suave(k(.22, .36, s)) * (1 - suave(k(.36, .5, s)));  // cintura
+    w *= 1 - .9 * Math.pow(k(.52, 1, s), 1.35);         // cola
+    return Math.max(.06, w);
   }
 
   // Lengua de fuego, sirve para melena, codos y cola
@@ -125,7 +136,9 @@
     const Q = P0.map((p, i) => {
       const s = i / (N - 1);
       const env = Math.min(1, s / .18) * (1 - s * .3);
-      const off = Math.sin(t * 3.4 - i * .32) * W * .32 * env;
+      const fase = this.recorrido / (this.sep * 9) * Math.PI * 2 + t * 1.6;
+      const amp = W * (.18 + Math.min(.3, this.rapidez / 2400));
+      const off = Math.sin(fase - i * .34) * amp * env;
       return { x: p.x - tan[i][1] * off, y: p.y + tan[i][0] * off, z: p.z };
     });
     // normales finales, la normal "n" apunta al lomo
@@ -304,11 +317,17 @@
 
   Dragon.prototype.cabeza = function (ctx, Q, tan, W, E, op) {
     const h = Q[0];
-    const ang = Math.atan2(tan[0][1], tan[0][0]);
+    const meta = Math.atan2(tan[0][1], tan[0][0]);
+    if (this.angCab === null) this.angCab = meta;
+    let dif = meta - this.angCab;
+    while (dif > Math.PI) dif -= Math.PI * 2;
+    while (dif < -Math.PI) dif += Math.PI * 2;
+    this.angCab += dif * .18;
+    const ang = this.angCab + Math.sin(this.t * 2.3) * .05;
     const t = this.t;
     const s = W / 22 * (op.prof ? op.prof(h.z) : 1) * .95;
     const flip = this.lado;
-    const boca = Math.max(0, Math.min(1, this.boca));
+    const boca = Math.max(0, Math.min(1.5, this.boca));
     ctx.save();
     ctx.translate(h.x, h.y);
     ctx.rotate(ang);
@@ -402,15 +421,21 @@
     // cuerno de adelante
     cuerno(0, 0, E.cuerno, 4.6);
     // bigotes largos
-    ctx.strokeStyle = E.punta; ctx.lineWidth = 1.7;
+    ctx.strokeStyle = E.punta;
     for (let k = 0; k < 2; k++) {
-      ctx.beginPath(); ctx.moveTo(46, -3 + k * 3);
-      let px = 46, py = -3 + k * 3;
+      const pts = [[46, -3 + k * 3]];
       for (let i = 1; i <= 16; i++) {
-        px -= 5.2; py += (k ? 2.2 : 1) + Math.sin(t * 5 - i * .55 + k * 1.3) * (1.2 + i * .45);
-        ctx.lineTo(px, py);
+        const q = pts[i - 1];
+        pts.push([q[0] - 5.2, q[1] + (k ? 2.2 : 1) + Math.sin(t * 4 - i * .5 + k * 1.3) * (.6 + i * .22)]);
       }
-      ctx.stroke();
+      // bigote que se afina hacia la punta
+      for (let i = 1; i < pts.length - 1; i++) {
+        const a = pts[i - 1], b = pts[i], c = pts[i + 1];
+        ctx.beginPath();
+        ctx.moveTo((a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+        ctx.quadraticCurveTo(b[0], b[1], (b[0] + c[0]) / 2, (b[1] + c[1]) / 2);
+        ctx.lineWidth = 2.2 * (1 - i / pts.length) + .4; ctx.stroke();
+      }
     }
     ctx.restore();
   };

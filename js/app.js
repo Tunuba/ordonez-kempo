@@ -57,6 +57,19 @@
   document.querySelectorAll('[data-logo]').forEach(s => logo(s, !s.classList.contains('logo-mini')));
   window.pintarLogo = logo;
 
+  // Titulo de la portada letra por letra
+  document.querySelectorAll('.portada h1 > span').forEach((sp, j) => {
+    const txt = sp.textContent;
+    sp.textContent = '';
+    [...txt].forEach((c, i) => {
+      const l = document.createElement('i');
+      l.className = 'letra';
+      l.textContent = c === ' ' ? ' ' : c;
+      l.style.animationDelay = (j * .35 + i * .045) + 's';
+      sp.appendChild(l);
+    });
+  });
+
   // Barra que se llena al bajar y menu que marca la seccion
   const barra = document.getElementById('barra');
   const enlaces = [...document.querySelectorAll('.menu a')];
@@ -81,6 +94,7 @@
   function mostrar(id, primera) {
     const p = paginas.find(s => s.id === id) || paginas[0];
     if (actual === p) { scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    paginas.forEach(s => { s.style.clipPath = ''; s.style.transition = ''; });
     if (actual) actual.classList.remove('activa');
     p.classList.add('activa');
     actual = p;
@@ -89,7 +103,19 @@
     const activo = document.querySelector('.menu a.activo');
     if (activo && activo.scrollIntoView && innerWidth < 1060) activo.scrollIntoView({ inline: 'center', block: 'nearest', behavior: primera ? 'auto' : 'smooth' });
     scrollTo(0, 0);
-    if (!primera && p.id !== 'inicio' && p.id !== 'juego' && window.dragonPasa) window.dragonPasa();
+    const conBoca = ['promos', 'juego', 'inscripcion'].includes(p.id);
+    if (!primera && conBoca && window.dragonBoca) {
+      // la pagina sale de la boca del dragon
+      p.style.transition = 'none';
+      p.style.clipPath = 'circle(0px at 30% 50%)';
+      window.dragonBoca((x, y) => {
+        p.style.clipPath = `circle(0px at ${x}px ${y}px)`;
+        void p.offsetWidth;
+        p.style.transition = 'clip-path .9s cubic-bezier(.7,0,.2,1)';
+        p.style.clipPath = `circle(160vmax at ${x}px ${y}px)`;
+        setTimeout(() => { p.style.clipPath = ''; p.style.transition = ''; }, 950);
+      });
+    } else if (!primera && p.id !== 'inicio' && window.dragonPasa) window.dragonPasa();
     dispatchEvent(new CustomEvent('pagina', { detail: { id: p.id } }));
     alBajar();
   }
@@ -140,7 +166,10 @@
     const v = { d: Math.floor(d / 86400), h: Math.floor(d % 86400 / 3600), m: Math.floor(d % 3600 / 60), s: Math.floor(d % 60) };
     for (const k in v) {
       const t = String(v[k]).padStart(2, '0');
-      if (celdas[k] && celdas[k].textContent !== t) celdas[k].textContent = t;
+      if (celdas[k] && celdas[k].textContent !== t) {
+        celdas[k].textContent = t;
+        celdas[k].classList.remove('gira'); void celdas[k].offsetWidth; celdas[k].classList.add('gira');
+      }
     }
   }
   cuenta();

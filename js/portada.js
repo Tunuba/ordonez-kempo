@@ -69,7 +69,7 @@
       { v: volcanes(W, fy + 2, 21, H * .2), c: '#1c0b0a', k: .05 },
       { v: volcanes(W, fy + 6, 43, H * .11), c: '#110807', k: .09 }
     ];
-    dragon.ancho = 21 * esc; dragon.sep = 6.6 * esc;
+    dragon.ancho = 19 * esc; dragon.sep = 6.6 * esc;
     if (!dragon.puntos.length) {
       // nace ya enroscado, se simulan unos segundos de vuelo
       const o = orbita(theta - 6);
@@ -81,7 +81,7 @@
   // camino en espiral alrededor del karateka, z positivo pasa por delante
   function orbita(th) {
     const alto = 210 * esc;
-    const Rx = (W < 760 ? 118 : 150) * esc + Math.sin(th * .7) * 10 * esc;
+    const Rx = (W < 760 ? 130 : 178) * esc + Math.sin(th * .7) * 10 * esc;
     return [fx + Math.cos(th) * Rx, fy - alto * .52 + Math.sin(th * .5) * alto * .34 + Math.sin(th) * 22 * esc, Math.sin(th)];
   }
   function nuevoPetalo(cualquiera) {
@@ -183,8 +183,8 @@
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z < 0, prof });
     // karateka en tinta con borde dorado
     ctx.save();
-    ctx.shadowColor = 'rgba(255,170,70,.9)'; ctx.shadowBlur = 14 * D;
-    F.dibujar(ctx, pose, { x: fx, suelo: fy + 6, escala: esc, mira: 1, estilo: 'silueta', color: '#0b0809', colorAtras: '#160f10', cintaSilueta: '#d7261e', vincha: '#d7261e', tiempo, viento: .6 + rugido });
+    ctx.shadowColor = 'rgba(255,150,60,.75)'; ctx.shadowBlur = 22 * D;
+    F.dibujar(ctx, pose, { x: fx, suelo: fy + 6, escala: esc, mira: 1, cinta: '#141012', vincha: '#d7261e', tiempo, viento: .6 + rugido });
     ctx.restore();
     // dragon por delante
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z >= 0, prof });
@@ -254,7 +254,69 @@
     if (V.estado === 'fuera') { medirVuelo(); pasada(false); }
     V.estado = 'llamado'; V.meta = { x, y }; V.vueltas = 0;
   };
+  // Cabeza gigante que entra, abre la boca, escupe fuego y suelta la pagina
+  const llamas = [];
+  let alAbrir = null;
+  window.dragonBoca = (cb) => {
+    medirVuelo();
+    alAbrir = cb;
+    const m = Math.min(vW, vH);
+    volador.n = 34; volador.estilo = 'oro';
+    volador.ancho = m * (vW < 760 ? .2 : .17); volador.sep = volador.ancho * .45;
+    V.estado = 'boca'; V.f = 0;
+    V.x0 = -volador.ancho * 2; V.y0 = vH * .78;
+    V.tx = vW * (vW < 760 ? .18 : .3); V.ty = vH * .5;
+    volador.angCab = null;
+    volador.colocar(V.x0, V.y0, -.5);
+    volador.boca = 0;
+  };
+  function pasoBoca(dt) {
+    V.f += dt;
+    const f = V.f;
+    let x, y;
+    if (f < .5) {
+      const k = 1 - Math.pow(1 - f / .5, 3);
+      x = V.x0 + (V.tx - V.x0) * k; y = V.y0 + (V.ty - V.y0) * k - Math.sin(k * Math.PI) * vH * .12;
+      volador.boca = 0;
+    } else if (f < 1.05) {
+      const k = (f - .5) / .55;
+      x = V.tx + Math.sin(k * Math.PI) * 14; y = V.ty + Math.sin(f * 9) * 3;
+      volador.boca += (1.5 - volador.boca) * Math.min(1, dt * 14);
+      if (alAbrir && f > .62) {
+        const b = volador.boquilla();
+        alAbrir(b.x, b.y); alAbrir = null;
+        if (window.Sonido) window.Sonido.rugido();
+      }
+      if (f > .6) {
+        const b = volador.boquilla();
+        for (let i = 0; i < 5; i++) {
+          const a = b.ang + azar(-.35, .35), v = azar(500, 1100);
+          llamas.push({ x: b.x, y: b.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: azar(10, 26) * volador.ancho / 60, v: 1 });
+        }
+      }
+    } else {
+      const k = f - 1.05;
+      x = V.tx + k * k * vW * 1.4 + k * 300; y = V.ty - k * vH * 1.3;
+      volador.boca += (0 - volador.boca) * Math.min(1, dt * 5);
+      if (f > 2.4) { V.estado = 'fuera'; V.espera = azar(5, 9); volador.n = 64; }
+    }
+    if (V.estado === 'boca') volador.mover(x, y, 0, dt);
+  }
+  function dibujarLlamas(dt) {
+    if (!llamas.length) return;
+    vctx.globalCompositeOperation = 'lighter';
+    for (let i = llamas.length - 1; i >= 0; i--) {
+      const l = llamas[i];
+      l.x += l.vx * dt; l.y += l.vy * dt; l.vx *= 1 - dt * 1.2; l.vy *= 1 - dt * 1.2; l.r *= 1 + dt * 2.6; l.v -= dt * 1.5;
+      if (l.v <= 0) { llamas.splice(i, 1); continue; }
+      const g = vctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r);
+      g.addColorStop(0, `rgba(255,245,200,${l.v})`); g.addColorStop(.45, `rgba(255,140,40,${l.v * .8})`); g.addColorStop(1, 'rgba(210,30,10,0)');
+      vctx.fillStyle = g; vctx.beginPath(); vctx.arc(l.x, l.y, l.r, 0, Math.PI * 2); vctx.fill();
+    }
+    vctx.globalCompositeOperation = 'source-over';
+  }
   function pasoVuelo(dt) {
+    if (V.estado === 'boca') { pasoBoca(dt); return true; }
     const pagina = document.body.dataset.pagina;
     const callado = pagina === 'inicio' || pagina === 'juego';
     if (V.estado === 'fuera') {
@@ -267,6 +329,7 @@
       V.x += V.dir * V.vel * dt;
       V.y = V.base + Math.sin(V.f * 4.6) * 80 + Math.sin(V.f * 1.3) * 50;
       volador.mover(V.x, V.y, 0, dt);
+      volador.boca += ((Math.sin(V.f * 1.7) > .8 ? 1.1 : 0) - volador.boca) * Math.min(1, dt * 8);
       const cola = volador.n * volador.sep + 120;
       if ((V.dir > 0 && V.x > vW + cola) || (V.dir < 0 && V.x < -cola)) { V.estado = 'fuera'; V.espera = azar(6, 11); }
     } else if (V.estado === 'llamado') {
@@ -287,10 +350,34 @@
     }
     return true;
   }
-  function dibujarVuelo() {
+  function dibujarVuelo(dt) {
     vctx.setTransform(vD, 0, 0, vD, 0, 0);
     vctx.clearRect(0, 0, vW, vH);
     if (V.estado !== 'fuera') volador.dibujar(vctx, {});
+    dibujarLlamas(dt || .016);
+    dibujarGolpes(dt || .016);
+  }
+  // cada toque suelta un golpe de chispas
+  const golpes = [];
+  document.addEventListener('pointerdown', e => {
+    golpes.push({ x: e.clientX, y: e.clientY, v: 1, r: 4, a: Math.random() * 6 });
+  }, true);
+  function dibujarGolpes(dt) {
+    for (let i = golpes.length - 1; i >= 0; i--) {
+      const g = golpes[i];
+      g.v -= dt * 2.6; g.r += dt * 260;
+      if (g.v <= 0) { golpes.splice(i, 1); continue; }
+      vctx.beginPath(); vctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+      vctx.strokeStyle = `rgba(232,176,74,${g.v})`; vctx.lineWidth = 3 * g.v; vctx.stroke();
+      for (let k = 0; k < 8; k++) {
+        const a = g.a + k / 8 * Math.PI * 2;
+        vctx.beginPath();
+        vctx.moveTo(g.x + Math.cos(a) * g.r * .5, g.y + Math.sin(a) * g.r * .5);
+        vctx.lineTo(g.x + Math.cos(a) * g.r * .85, g.y + Math.sin(a) * g.r * .85);
+        vctx.strokeStyle = k % 2 ? `rgba(255,74,46,${g.v})` : `rgba(255,230,160,${g.v})`;
+        vctx.lineWidth = 2.5; vctx.stroke();
+      }
+    }
   }
   // tocar un espacio vacio llama al dragon
   document.addEventListener('pointerdown', e => {
@@ -346,6 +433,16 @@
       }
     }
   }
+
+  mini.forEach(m => {
+    const tarjeta = m.c.closest('.clase, .promo');
+    if (!tarjeta) return;
+    tarjeta.addEventListener('pointerenter', () => {
+      if (!m.a.libre()) return;
+      m.a.ya('directo', .09, .06, 'golpe').a('cruzado', .09, .06, 'golpe').a('circular', .16, .3, 'golpe').a('guardia', .3, .2);
+      m.espera = 1.2; m.chispa = .35;
+    });
+  });
 
   /* ---------------- Escena de tecnicas ---------------- */
   const tc = document.getElementById('lienzo-tecnica');
@@ -452,7 +549,7 @@
       pasoTecnica(dt);
       if (vuelo.width !== Math.round(innerWidth * Math.min(devicePixelRatio || 1, 2))) medirVuelo();
       pasoVuelo(dt);
-      dibujarVuelo();
+      dibujarVuelo(dt);
     }
     requestAnimationFrame(bucle);
   }
