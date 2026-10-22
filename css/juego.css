@@ -1,0 +1,16 @@
+/* Solo del Reto del Dragon */
+.juego-marco { outline: none; }
+.juego-marco.jugando #lienzo-juego { cursor: pointer; }
+.juego-marco::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,.08) 30%, rgba(255,255,255,.08) 70%, transparent);
+  opacity: 0; transition: opacity .4s;
+}
+.juego-marco.jugando::after { opacity: 1; }
+.juego-capa h3 { text-shadow: 0 6px 30px rgba(215,38,30,.6); }
+.juego-capa .btn { min-width: 200px; }
+.juego-dragon { z-index: 2; }
+@media (max-width: 760px) {
+  .juego-teclas { font-size: .8rem; gap: 10px; }
+  .juego-capa p { font-size: .95rem; }
+}
