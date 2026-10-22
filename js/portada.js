@@ -85,7 +85,10 @@
   let kataI = 0, kataEspera = 1.5;
 
   function medir() {
-    const m = F.ajustar(cv); W = m.w; H = m.h; D = m.d;
+    const m = F.ajustar(cv);
+    // al girar el telefono el lienzo puede medir cero un instante
+    if (m.w < 20 || m.h < 20) return;
+    W = m.w; H = m.h; D = m.d;
     const tel = W < 760;
     esc = Math.min(H / 210 * (tel ? .36 : .5), W / 210 * (tel ? .62 : .5));
     fx = tel ? W * .5 : W * .66;
@@ -551,7 +554,7 @@
     x.fillStyle = '#1a1112'; x.fillRect(0, 0, s.w, suelo);
     for (let i = 0; i < s.w; i += 46 * e) { x.fillStyle = i / (46 * e) % 2 ? 'rgba(255,255,255,.015)' : 'rgba(0,0,0,.12)'; x.fillRect(i, 0, 46 * e, suelo); }
     // pergamino con kanji
-    const kx = s.w * .16, ky = s.h * .1;
+    const kx = s.w * .06, ky = s.h * .24;
     x.fillStyle = '#e9dfcc'; x.fillRect(kx, ky, 54 * e, 150 * e);
     x.fillStyle = '#5a3b22'; x.fillRect(kx - 6 * e, ky - 6 * e, 66 * e, 8 * e); x.fillRect(kx - 6 * e, ky + 148 * e, 66 * e, 8 * e);
     x.fillStyle = '#1a1214'; x.font = `${38 * e}px "Yuji Syuku", serif`; x.textAlign = 'center';

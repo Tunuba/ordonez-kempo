@@ -40,6 +40,8 @@
 
   Dragon.prototype.mover = function (x, y, z, dt) {
     dt = dt || 0.016;
+    if (!(this.sep > .5)) this.sep = .5;
+    if (!isFinite(x) || !isFinite(y)) return;
     this.t += dt;
     const h = this.hist;
     const u = h[0];
