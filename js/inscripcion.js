@@ -228,7 +228,7 @@
     const msj = `Hola, quiero preinscribir a ${est.nombre}, de ${est.edad} años, en la clase de ${g.corto} de Kempo. ` +
       `Días ${[...est.dias].join(', ')}. Su meta es ${est.meta ? est.meta.toLowerCase() : 'aprender'}. Mi teléfono es ${est.tel.slice(0, 4)} ${est.tel.slice(4)}. ` +
       `Quiero mi primera clase gratis.`;
-    document.getElementById('ins-whatsapp').href = 'https://wa.me/50255552580?text=' + encodeURIComponent(msj);
+    document.getElementById('ins-whatsapp').href = 'https://wa.me/50244879446?text=' + encodeURIComponent(msj);
   }
   document.getElementById('ins-bajar').addEventListener('click', () => {
     const c = document.getElementById('pase-lienzo');
@@ -414,7 +414,7 @@
     x.textAlign = 'left'; x.textBaseline = 'alphabetic';
     x.fillStyle = '#e8b04a'; x.font = `800 15px ${DISP}`;
     if ('letterSpacing' in x) x.letterSpacing = '3px';
-    x.fillText('ORDÓÑEZ TEAM KEMPO KARATE', 40, 400);
+    x.fillText('ORDÓÑEZ TEAM ELEMENT KARATE', 40, 400);
     x.fillStyle = 'rgba(243,236,224,.55)'; x.font = `600 12px ${TXT}`;
     if ('letterSpacing' in x) x.letterSpacing = '2px';
     x.textAlign = 'right';

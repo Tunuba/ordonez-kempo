@@ -40,7 +40,7 @@
     if (conTexto) {
       h += `<circle cx="100" cy="100" r="77" fill="none" stroke="url(#${id}o)" stroke-width="1.2" opacity=".7"/>`;
       h += `<text font-family="Big Shoulders Display, Arial Narrow, sans-serif" font-weight="900" font-size="15" letter-spacing="3.2" fill="#f3ece0"><textPath href="#${id}t" startOffset="50%" text-anchor="middle" dominant-baseline="middle">ORDÓÑEZ TEAM</textPath></text>`;
-      h += `<text font-family="Big Shoulders Display, Arial Narrow, sans-serif" font-weight="800" font-size="12.5" letter-spacing="3.6" fill="#e8b04a"><textPath href="#${id}b" startOffset="50%" text-anchor="middle" dominant-baseline="middle">KEMPO KARATE</textPath></text>`;
+      h += `<text font-family="Big Shoulders Display, Arial Narrow, sans-serif" font-weight="800" font-size="12.5" letter-spacing="3.6" fill="#e8b04a"><textPath href="#${id}b" startOffset="50%" text-anchor="middle" dominant-baseline="middle">ELEMENT KARATE</textPath></text>`;
       h += `<circle cx="17" cy="100" r="2.4" fill="#d7261e"/><circle cx="183" cy="100" r="2.4" fill="#d7261e"/>`;
     }
     const k = conTexto ? .82 : 1.12;
@@ -87,7 +87,7 @@
   alBajar();
   // Paginas, una seccion a la vez como en una app
   const paginas = [...document.querySelectorAll('main > section[id]')];
-  const NOMBRES = { inicio: 'Inicio', promos: 'Promociones', clases: 'Clases', estilo: 'Nuestro estilo', tecnicas: 'Técnicas', horario: 'Horario', juego: 'Reto del Dragón', inscripcion: 'Preinscripción', contacto: 'Visítanos' };
+  const NOMBRES = { inicio: 'Inicio', promos: 'Promociones', clases: 'Clases', estilo: 'Nuestro estilo', equipo: 'Nuestro equipo', tecnicas: 'Técnicas', horario: 'Horario', juego: 'Reto del Dragón', inscripcion: 'Preinscripción', contacto: 'Visítanos' };
   paginas.forEach((s, i) => {
     const sig = paginas[i + 1];
     if (!sig || s.id === 'inicio') return;
@@ -140,7 +140,7 @@
   mostrar(location.hash.slice(1) || 'inicio', true);
 
   // Aparicion al bajar
-  const piezas = document.querySelectorAll('.cabeza, .promo, .clase, .estilo-txt, .pilar, .tec-escena, .tec-botones, .cintas, .filtros, .dia, .juego-marco, .inscripcion, .contacto-txt, .mapa');
+  const piezas = document.querySelectorAll('.cabeza, .eq-grande, .eq-tira figure, .promo, .clase, .estilo-txt, .pilar, .tec-escena, .tec-botones, .cintas, .filtros, .dia, .juego-marco, .inscripcion, .contacto-txt, .mapa');
   const obs = new IntersectionObserver(es => {
     es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visto'); obs.unobserve(e.target); } });
   }, { threshold: .12 });
@@ -233,4 +233,84 @@
       t.classList.toggle('apagado', f !== 'todos' && t.dataset.g !== f && t.dataset.g !== 'todos');
     });
   });
+
+  // Fotos del equipo, visor a pantalla completa con flechas, teclado y deslizar
+  const fotos = [...document.querySelectorAll('[data-foto]')].sort((a, b) => a.dataset.foto - b.dataset.foto);
+  const visor = document.getElementById('visor');
+  if (visor && fotos.length) {
+    const vImg = visor.querySelector('img'), vPie = visor.querySelector('.visor-pie');
+    let vi = 0;
+    const poner = (i, dir) => {
+      vi = (i + fotos.length) % fotos.length;
+      const f = fotos[vi], im = f.querySelector('img');
+      vImg.src = im.src; vImg.alt = im.alt;
+      const pie = f.querySelector('figcaption');
+      vPie.textContent = pie ? pie.textContent.trim() : '';
+      vImg.animate([{ opacity: 0, transform: `translateX(${(dir || 0) * 60}px) scale(.96)` }, { opacity: 1, transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    };
+    const abrir = (i) => { poner(i, 0); visor.classList.add('abierto'); visor.setAttribute('aria-hidden', 'false'); };
+    const cerrar = () => { visor.classList.remove('abierto'); visor.setAttribute('aria-hidden', 'true'); };
+    fotos.forEach((f, i) => f.addEventListener('click', () => abrir(i)));
+    visor.querySelector('.visor-cerrar').addEventListener('click', cerrar);
+    visor.querySelector('.visor-atras').addEventListener('click', () => poner(vi - 1, -1));
+    visor.querySelector('.visor-sig').addEventListener('click', () => poner(vi + 1, 1));
+    visor.addEventListener('click', e => { if (e.target === visor) cerrar(); });
+    addEventListener('keydown', e => {
+      if (!visor.classList.contains('abierto')) return;
+      if (e.key === 'Escape') cerrar();
+      if (e.key === 'ArrowRight') poner(vi + 1, 1);
+      if (e.key === 'ArrowLeft') poner(vi - 1, -1);
+    });
+    let x0 = null;
+    visor.addEventListener('pointerdown', e => { x0 = e.clientX; });
+    visor.addEventListener('pointerup', e => {
+      if (x0 === null) return;
+      const d = e.clientX - x0; x0 = null;
+      if (Math.abs(d) > 50) poner(vi + (d < 0 ? 1 : -1), d < 0 ? 1 : -1);
+    });
+  }
+
+  // Musica de fondo, arranca suave con el primer toque o tecla y se repite
+  const musica = new Audio('audio/dojo-training.mp3');
+  musica.loop = true; musica.volume = 0; musica.preload = 'auto';
+  const btnMusica = document.getElementById('btn-musica');
+  let musicaSi = true;
+  try { musicaSi = localStorage.getItem('kempo-musica') !== 'no'; } catch (e) {}
+  let volMeta = 0, fundido = 0;
+  const volPagina = () => (document.body.dataset.pagina === 'juego' ? .1 : .32);
+  function fundir() {
+    cancelAnimationFrame(fundido);
+    const paso = () => {
+      const v = musica.volume + (volMeta - musica.volume) * .06;
+      musica.volume = Math.abs(volMeta - v) < .004 ? volMeta : Math.max(0, Math.min(1, v));
+      if (musica.volume === 0 && volMeta === 0) { musica.pause(); return; }
+      if (musica.volume !== volMeta) fundido = requestAnimationFrame(paso);
+    };
+    fundido = requestAnimationFrame(paso);
+  }
+  function sonar() {
+    if (!musicaSi) return;
+    volMeta = volPagina();
+    musica.play().then(fundir).catch(() => {});
+  }
+  function pintarBoton() { btnMusica.classList.toggle('apagada', !musicaSi); btnMusica.classList.toggle('suena', musicaSi && !musica.paused); }
+  musica.addEventListener('play', pintarBoton);
+  musica.addEventListener('pause', pintarBoton);
+  const primerToque = (e) => {
+    if (e.target && e.target.closest && e.target.closest('#btn-musica')) return;
+    sonar();
+    removeEventListener('pointerdown', primerToque, true);
+    removeEventListener('keydown', primerToque, true);
+  };
+  addEventListener('pointerdown', primerToque, true);
+  addEventListener('keydown', primerToque, true);
+  btnMusica.addEventListener('click', e => {
+    e.stopPropagation();
+    musicaSi = !musicaSi;
+    try { localStorage.setItem('kempo-musica', musicaSi ? 'si' : 'no'); } catch (er) {}
+    if (musicaSi) sonar(); else { volMeta = 0; fundir(); }
+    pintarBoton();
+  });
+  addEventListener('pagina', () => { if (musicaSi && !musica.paused) { volMeta = volPagina(); fundir(); } });
+  pintarBoton();
 })();
