@@ -256,17 +256,11 @@
   function cargarLogo() {
     if (imgLogo) return Promise.resolve(imgLogo);
     return new Promise(res => {
-      if (!window.pintarLogo) return res(null);
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      svg.setAttribute('viewBox', '0 0 200 200');
-      svg.setAttribute('width', '400'); svg.setAttribute('height', '400');
-      window.pintarLogo(svg, true);
-      const txt = new XMLSerializer().serializeToString(svg);
+      // el logo del dojo, el tigre de Element Karate
       const im = new Image();
       im.onload = () => { imgLogo = im; res(im); };
       im.onerror = () => res(null);
-      im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(txt);
+      im.src = 'img/logo-tigre.png';
     });
   }
   function redondo(c, x, y, w, h, r) {

@@ -54,8 +54,13 @@
     h += `</g>`;
     svg.innerHTML = h;
   }
-  document.querySelectorAll('[data-logo]').forEach(s => logo(s, !s.classList.contains('logo-mini')));
-  window.pintarLogo = logo;
+  // El logo del dojo es el tigre de Element Karate, el dibujado queda de respaldo
+  function logoDojo(svg) {
+    svg.innerHTML = '<image href="img/logo-tigre.png" x="0" y="0" width="200" height="200"/>';
+  }
+  document.querySelectorAll('[data-logo]').forEach(s => logoDojo(s));
+  window.pintarLogo = logoDojo;
+  window.pintarLogoDragon = logo;
 
   // Titulo de la portada letra por letra
   document.querySelectorAll('.portada h1 > span').forEach((sp, j) => {

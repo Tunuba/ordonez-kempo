@@ -390,7 +390,7 @@ body[data-pagina=inicio] .pie { display: none; }
 .portada .cinta-texto { position: absolute; left: -2%; right: -2%; bottom: 18px; margin: 0; z-index: 3; }
 .portada .portada-pista { bottom: 82px; }
 .portada-sello { position: absolute; right: clamp(16px, 3vw, 40px); top: 88px; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; width: 210px; pointer-events: none; }
-.sello-logo { width: 104px; height: 104px; filter: drop-shadow(0 10px 30px rgba(0,0,0,.7)); animation: sello-flota 6s ease-in-out infinite; }
+.sello-logo { width: 150px; height: 150px; filter: drop-shadow(0 10px 30px rgba(0,0,0,.7)); animation: sello-flota 6s ease-in-out infinite; }
 @keyframes sello-flota { 50% { transform: translateY(-6px) rotate(-4deg); } }
 .portada-sello p { margin: 0; }
 .portada-sello b { display: block; font-family: var(--display); font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; line-height: 1.05; }

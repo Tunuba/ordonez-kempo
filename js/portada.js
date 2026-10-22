@@ -617,5 +617,5 @@
   addEventListener('resize', () => { medir(); medirVuelo(); });
   medir(); medirVuelo();
   requestAnimationFrame(bucle);
-  if (document.fonts) document.fonts.ready.then(() => { document.querySelectorAll('[data-logo]').forEach(s => window.pintarLogo && window.pintarLogo(s, !s.classList.contains('logo-mini'))); });
+  if (document.fonts) document.fonts.ready.then(() => { 0; });
 })();
