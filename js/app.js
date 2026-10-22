@@ -90,6 +90,14 @@
   }
   addEventListener('scroll', alBajar, { passive: true });
   alBajar();
+  // La pantalla de carga se va cuando estan las letras, sin pasar de dos segundos
+  const carga = document.getElementById('carga');
+  if (carga) {
+    const t0 = performance.now();
+    const quitar = () => setTimeout(() => carga.classList.add('lista'), Math.max(0, 550 - (performance.now() - t0)));
+    Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 2000))]).then(quitar);
+  }
+
   // Paginas, una seccion a la vez como en una app
   const paginas = [...document.querySelectorAll('main > section[id]')];
   const NOMBRES = { inicio: 'Inicio', promos: 'Promociones', clases: 'Clases', estilo: 'Nuestro estilo', equipo: 'Nuestro equipo', tecnicas: 'Técnicas', horario: 'Horario', juego: 'Reto del Dragón', inscripcion: 'Preinscripción', contacto: 'Visítanos' };
@@ -229,6 +237,56 @@
       <h3>${n}${d === hoy ? '<small>HOY</small>' : ''}</h3>
       ${ts.map(([g, t, h]) => `<div class="turno" data-g="${g}"><b>${t}</b><span>${h}</span></div>`).join('')}
     </div>`).join('');
+  // Clase de ahora y la siguiente, con la hora de la computadora o el telefono
+  function minutos(txt, merDefecto) {
+    const m = txt.trim().match(/^(\d{1,2})(?:\.(\d{2}))?\s*(am|pm)?$/);
+    if (!m) return null;
+    let h = +m[1];
+    const mer = m[3] || merDefecto;
+    if (mer === 'pm' && h !== 12) h += 12;
+    if (mer === 'am' && h === 12) h = 0;
+    return h * 60 + (+m[2] || 0);
+  }
+  function rango(txt) {
+    const [a, b] = txt.split(' a ');
+    const merB = (b.match(/(am|pm)$/) || [])[1];
+    let fin = minutos(b);
+    let ini = minutos(a, merB);
+    if (ini !== null && fin !== null && ini > fin) ini -= 12 * 60;
+    return [ini, fin];
+  }
+  const avisoHorario = document.createElement('p');
+  avisoHorario.className = 'horario-aviso';
+  tabla.parentElement.insertBefore(avisoHorario, tabla);
+  function marcarAhora() {
+    const ahora = new Date(), dia = ahora.getDay(), min = ahora.getHours() * 60 + ahora.getMinutes();
+    tabla.querySelectorAll('.turno').forEach(t => t.classList.remove('ahora'));
+    let proxima = null;
+    for (let k = 0; k < 8 && !proxima; k++) {
+      const d = (dia + k) % 7;
+      const fila = DIAS.find(x => x[1] === d);
+      if (!fila) continue;
+      fila[2].forEach(([g, nom, h], i) => {
+        const [ini, fin] = rango(h);
+        if (k === 0 && min >= ini && min < fin) {
+          const el = tabla.children[DIAS.indexOf(fila)].querySelectorAll('.turno')[i];
+          if (el) el.classList.add('ahora');
+        }
+        const falta = k * 1440 + ini - min;
+        if (falta > 0 && (!proxima || falta < proxima.falta)) proxima = { falta, nom, dia: fila[0], h };
+      });
+    }
+    const enClase = tabla.querySelector('.turno.ahora');
+    if (enClase) avisoHorario.innerHTML = '<span class="punto-vivo"></span>En este momento hay clase de <b>' + enClase.querySelector('b').textContent + '</b>';
+    else if (proxima) {
+      const h = Math.floor(proxima.falta / 60), m = proxima.falta % 60;
+      const cuando = proxima.falta < 60 ? 'en ' + m + ' min' : proxima.falta < 1440 ? 'en ' + h + ' h' + (m ? ' ' + m + ' min' : '') : 'el ' + proxima.dia.toLowerCase();
+      avisoHorario.innerHTML = 'Próxima clase, <b>' + proxima.nom + '</b> ' + cuando + ', de ' + proxima.h;
+    }
+  }
+  marcarAhora();
+  setInterval(marcarAhora, 30000);
+
   document.getElementById('filtros').addEventListener('click', e => {
     const b = e.target.closest('.filtro');
     if (!b) return;

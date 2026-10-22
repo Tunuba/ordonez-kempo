@@ -17,7 +17,7 @@
   --kanji: 'Yuji Syuku', 'Yu Mincho', 'MS Mincho', serif;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 body {
   margin: 0;
@@ -41,6 +41,14 @@ img, svg, canvas { display: block; }
 a { color: inherit; }
 h1, h2, h3 { font-family: var(--display); line-height: .95; margin: 0; letter-spacing: .01em; }
 button { font: inherit; color: inherit; }
+
+/* Pantalla de carga */
+.carga { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: var(--tinta); transition: opacity .5s, visibility .5s; }
+.carga img { width: 120px; height: 120px; animation: carga-entra .7s cubic-bezier(.2,.9,.3,1.3) both; }
+.carga span { position: absolute; width: 150px; height: 150px; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--oro); border-right-color: var(--rojo); animation: gira-carga .9s linear infinite; }
+.carga.lista { opacity: 0; visibility: hidden; }
+@keyframes carga-entra { from { transform: scale(.6) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes gira-carga { to { transform: rotate(360deg); } }
 
 /* Botones */
 .btn {
@@ -269,6 +277,11 @@ h2 { font-size: clamp(44px, 5.6vw, 88px); font-weight: 900; text-transform: uppe
 .turno[data-g=jovenes] b { color: #ff7a5c; }
 .turno[data-g=adultos] b { color: var(--papel); }
 .turno[data-g=todos] b { color: #6fd39a; }
+.horario-aviso { display: block; margin: -6px auto 16px; color: var(--papel-2); font-weight: 500; }
+.horario-aviso b { color: var(--oro-2); }
+.horario-aviso .punto-vivo { display: inline-block; vertical-align: middle; margin: -2px 10px 0 2px; }
+.turno.ahora { position: relative; background: rgba(215,38,30,.14); border-radius: 10px; padding-left: 10px; padding-right: 10px; }
+.turno.ahora::after { content: 'AHORA'; position: absolute; right: 8px; top: 12px; font: 800 .65rem var(--texto); letter-spacing: .14em; color: #fff; background: var(--rojo); padding: 3px 7px; border-radius: 999px; animation: latido 1.8s infinite; }
 .turno.apagado { opacity: .18; transform: scale(.97); filter: grayscale(1); }
 
 /* Juego */
@@ -395,7 +408,7 @@ body:not([data-pagina=inicio]) .barra { background: rgba(12,10,11,.94); }
 body[data-pagina=inicio] .pie { display: none; }
 .portada .cinta-texto { position: absolute; left: -2%; right: -2%; bottom: 18px; margin: 0; z-index: 3; }
 .portada .portada-pista { bottom: 82px; }
-.portada-sello { position: absolute; right: clamp(16px, 3vw, 40px); top: 88px; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; width: 210px; pointer-events: none; }
+.portada-sello { position: absolute; right: clamp(16px, 3vw, 40px); top: 88px; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; width: 250px; pointer-events: none; }
 .sello-logo { width: 150px; height: 150px; filter: drop-shadow(0 10px 30px rgba(0,0,0,.7)); animation: sello-flota 6s ease-in-out infinite; }
 @keyframes sello-flota { 50% { transform: translateY(-6px) rotate(-4deg); } }
 .portada-sello p { margin: 0; }
@@ -541,6 +554,10 @@ body[data-pagina=inicio] .pie { display: none; }
   .ins-quien .opcion:last-child { grid-column: span 2; }
   .ins-dias { grid-template-columns: repeat(3, 1fr); }
   .eq-tira { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .siguiente { gap: 12px; padding: 14px 16px; }
+  .siguiente small { white-space: nowrap; font-size: .66rem; }
+  .siguiente b { font-size: 26px; line-height: 1; }
+  .siguiente svg { width: 40px; height: 40px; flex: none; }
   .pie { justify-content: center; text-align: center; padding-bottom: 20px; }
   .pie-nombre { margin-right: 0 !important; width: calc(100% - 70px); text-align: left; }
   .pie-kanji { display: none; }
