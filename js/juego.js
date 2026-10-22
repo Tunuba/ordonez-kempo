@@ -19,7 +19,7 @@
   const FUENTE = '"Big Shoulders Display", Impact, "Arial Narrow", sans-serif';
 
   let W = 0, H = 0, D = 1, esc = 1, suelo = 0, cx = 0, alcance = 0, contacto = 0;
-  let fondo = null, montes = null;
+  let fondo = null, montes = null, vineta = null;
 
   // Estado
   let modo = 'menu';
@@ -464,7 +464,7 @@
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(es => { enPantalla = es[0].isIntersecting; arrancar(); }, { threshold: .05 }).observe(marco);
   }
-  function activo() { return seccion && seccion.offsetParent !== null && enPantalla && !document.hidden; }
+  function activo() { return seccion && document.body.dataset.pagina === 'juego' && enPantalla && !document.hidden; }
   let corriendo = false, ultimo = 0;
   function arrancar() {
     if (corriendo || !activo()) return;
@@ -876,8 +876,12 @@
     ctx.restore();
 
     // vineta
-    const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .4, W / 2, H / 2, Math.max(W, H) * .75);
-    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.55)');
+    if (!vineta || vineta.w !== W || vineta.h !== H) {
+      vineta = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .4, W / 2, H / 2, Math.max(W, H) * .75);
+      vineta.addColorStop(0, 'rgba(0,0,0,0)'); vineta.addColorStop(1, 'rgba(0,0,0,.55)');
+      vineta.w = W; vineta.h = H;
+    }
+    const v = vineta;
     ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
     if (flash > 0) { ctx.fillStyle = `rgba(215,38,30,${flash * .55})`; ctx.fillRect(0, 0, W, H); }
     if (lento > 0) { ctx.fillStyle = `rgba(255,210,122,${Math.min(.12, lento * .1)})`; ctx.fillRect(0, 0, W, H); }

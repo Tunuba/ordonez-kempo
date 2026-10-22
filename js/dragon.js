@@ -195,8 +195,7 @@
       tramos.forEach(([a, b]) => {
         ctx.beginPath(); ctx.moveTo(Q[a].x, Q[a].y);
         for (let i = a + 1; i <= b; i++) ctx.lineTo(Q[i].x, Q[i].y);
-        ctx.strokeStyle = E.brillo; ctx.lineWidth = W * 1.9; ctx.stroke();
-        ctx.lineWidth = W * 1.25; ctx.stroke();
+        ctx.strokeStyle = E.brillo; ctx.lineWidth = W * 1.6; ctx.stroke();
       });
       ctx.globalCompositeOperation = 'source-over';
     }

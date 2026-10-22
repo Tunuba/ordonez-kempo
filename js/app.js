@@ -116,7 +116,7 @@
     if (activo && activo.scrollIntoView && innerWidth < 1060) activo.scrollIntoView({ inline: 'center', block: 'nearest', behavior: primera ? 'auto' : 'smooth' });
     scrollTo(0, 0);
     const conBoca = ['promos', 'juego', 'inscripcion'].includes(p.id);
-    if (!primera && conBoca && window.dragonBoca) {
+    if (!primera && conBoca && window.dragonBoca && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       // la pagina sale de la boca del dragon
       p.style.transition = 'none';
       p.style.clipPath = 'circle(0px at 30% 50%)';
@@ -255,7 +255,12 @@
     };
     const abrir = (i) => { poner(i, 0); visor.classList.add('abierto'); visor.setAttribute('aria-hidden', 'false'); };
     const cerrar = () => { visor.classList.remove('abierto'); visor.setAttribute('aria-hidden', 'true'); };
-    fotos.forEach((f, i) => f.addEventListener('click', () => abrir(i)));
+    fotos.forEach((f, i) => {
+      f.tabIndex = 0;
+      f.setAttribute('role', 'button');
+      f.addEventListener('click', () => abrir(i));
+      f.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(i); } });
+    });
     visor.querySelector('.visor-cerrar').addEventListener('click', cerrar);
     visor.querySelector('.visor-atras').addEventListener('click', () => poner(vi - 1, -1));
     visor.querySelector('.visor-sig').addEventListener('click', () => poner(vi + 1, 1));
@@ -276,8 +281,9 @@
   }
 
   // Musica de fondo, arranca suave con el primer toque o tecla y se repite
-  const musica = new Audio('audio/dojo-training.mp3');
-  musica.loop = true; musica.volume = 0; musica.preload = 'auto';
+  // no se descarga hasta el primer toque, asi la pagina abre rapido en el telefono
+  const musica = new Audio();
+  musica.loop = true; musica.volume = 0; musica.preload = 'none';
   const btnMusica = document.getElementById('btn-musica');
   let musicaSi = true;
   try { musicaSi = localStorage.getItem('kempo-musica') !== 'no'; } catch (e) {}
@@ -296,6 +302,7 @@
   function sonar() {
     if (!musicaSi) return;
     volMeta = volPagina();
+    if (!musica.src) musica.src = 'audio/dojo-training.mp3';
     musica.play().then(fundir).catch(() => {});
   }
   function pintarBoton() { btnMusica.classList.toggle('apagada', !musicaSi); btnMusica.classList.toggle('suena', musicaSi && !musica.paused); }

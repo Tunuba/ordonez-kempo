@@ -111,6 +111,7 @@
   // Sol, enso, volcanes, piso y brillo del karateka se dibujan una sola vez
   let capaSol = null, capaEnso = null, capaPiso = null, capaBrillo = null, sr = 0;
   function hornear() {
+    claveFondo = '';
     const alto = 210 * esc;
     sr = Math.min(W, H) * (W < 760 ? .36 : .34);
     const R2 = sr * 1.8;
@@ -194,7 +195,7 @@
     rugido = Math.max(0, rugido - dt * .8);
     dragon.boca += ((rugido > .2 ? 1 : (Math.sin(tiempo * .9) > .93 ? .5 : 0)) - dragon.boca) * Math.min(1, dt * 10);
     const o = orbita(theta);
-    dragon.mover(o[0] + (mx - .5) * 30, o[1] + (my - .5) * 20, o[2], dt);
+    dragon.mover(o[0] + (mxS - .5) * 30, o[1] + (myS - .5) * 20, o[2], dt);
     // fuego al rugir
     if (rugido > .3) {
       const b = dragon.boquilla();
@@ -205,32 +206,51 @@
     return pose;
   }
 
+  // El fondo se arma en dos imagenes, atras (cielo y sol) y frente (volcanes y
+  // piso). Solo se rehacen cuando el raton mueve la vista; en cada cuadro se
+  // copian dos imagenes en vez de seis.
+  let atras = null, frente = null, claveFondo = '';
+  function componerFondo(px, py, sx, sy) {
+    const clave = Math.round(px * W * .18) + ',' + Math.round(py * 40) + ',' + W + ',' + H + ',' + D;
+    if (clave === claveFondo && atras) return;
+    claveFondo = clave;
+    if (!atras || atras.width !== Math.round(W * D) || atras.height !== Math.round(H * D)) { atras = lienzo(W * D, H * D); frente = lienzo(W * D, H * D); }
+    let x = atras.getContext('2d');
+    x.setTransform(D, 0, 0, D, 0, 0);
+    const g = x.createRadialGradient(W * .7, H * .4, 0, W * .7, H * .4, Math.max(W, H) * 1.05);
+    g.addColorStop(0, '#3a0f0c'); g.addColorStop(.43, '#1a0b0a'); g.addColorStop(.76, '#0c0a0b');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const R2 = sr * 1.8;
+    copiar(x, capaSol, sx - R2, sy - R2, R2 * 2, R2 * 2);
+    x = frente.getContext('2d');
+    x.setTransform(D, 0, 0, D, 0, 0);
+    x.clearRect(0, 0, W, H);
+    capas.forEach(c => copiar(x, c.lienzo, -px * W * c.k - c.margen, -py * 10 * c.k * 10, W + c.margen * 2, H));
+    copiar(x, capaPiso, 0, fy, W, H - fy);
+  }
+  let mxS = .5, myS = .5;
   function dibujarPortada(pose) {
     ctx.setTransform(D, 0, 0, D, 0, 0);
-    ctx.clearRect(0, 0, W, H);
-    const px = (mx - .5), py = (my - .5);
+    // la vista sigue al raton con suavidad
+    mxS += (mx - mxS) * .08; myS += (my - myS) * .08;
+    const px = (mxS - .5), py = (myS - .5);
     const alto = 210 * esc;
-    // sol, enso y volcanes ya hechos, solo se copian
     const sx = fx - px * 20, sy = fy - alto * .62 - py * 12;
-    const R2 = sr * 1.8;
-    copiar(ctx, capaSol, sx - R2, sy - R2, R2 * 2, R2 * 2);
+    componerFondo(px, py, sx, sy);
+    ctx.drawImage(atras, 0, 0, W, H);
     const RE = sr * 1.08 + 6;
     ctx.save(); ctx.translate(sx, sy); ctx.rotate(tiempo * .12);
     copiar(ctx, capaEnso, -RE, -RE, RE * 2, RE * 2);
     ctx.restore();
-    capas.forEach((c, i) => {
-      const ox = -px * W * c.k, oy = -py * 10 * c.k * 10;
-      copiar(ctx, c.lienzo, ox - c.margen, oy, W + c.margen * 2, H);
-      if (i === 0) {
-        const p = c.v.picos.reduce((a, b) => b.h > a.h ? b : a);
-        for (let k = 0; k < 7; k++) {
-          const f = (tiempo * .08 + k / 7) % 1;
-          ctx.beginPath(); ctx.arc(ox + p.x - p.a * .01 + f * 60 + Math.sin(f * 6 + k) * 8, oy + fy - 4 - p.h - f * 90, 6 + f * 22, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(90,40,30,${.35 * (1 - f)})`; ctx.fill();
-        }
-      }
-    });
-    copiar(ctx, capaPiso, 0, fy, W, H - fy);
+    ctx.drawImage(frente, 0, 0, W, H);
+    // humo del volcan de Fuego
+    const c0 = capas[0], ox = -px * W * c0.k, oy = -py * 10 * c0.k * 10;
+    const pico = c0.pico || (c0.pico = c0.v.picos.reduce((a, b) => b.h > a.h ? b : a));
+    for (let k = 0; k < 7; k++) {
+      const f = (tiempo * .08 + k / 7) % 1;
+      ctx.beginPath(); ctx.arc(ox + pico.x - pico.a * .01 + f * 60 + Math.sin(f * 6 + k) * 8, oy + fy - 4 - pico.h - f * 90, 6 + f * 22, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(90,40,30,${.35 * (1 - f)})`; ctx.fill();
+    }
     // chispas
     chispas.forEach(c => { ctx.globalAlpha = c.v; ctx.fillStyle = '#ffb347'; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill(); });
     ctx.globalAlpha = 1;
@@ -238,7 +258,7 @@
     const prof = (z) => .82 + .22 * (z + 1) / 2;
     // la perla va un poco adelante de la cabeza
     const pq = orbita(theta + .42);
-    const perla = () => Dragon.perla(ctx, pq[0] + (mx - .5) * 30, pq[1] + (my - .5) * 20, 7 * esc * prof(pq[2]), tiempo);
+    const perla = () => Dragon.perla(ctx, pq[0] + (mxS - .5) * 30, pq[1] + (myS - .5) * 20, 7 * esc * prof(pq[2]), tiempo);
     if (pq[2] < 0) perla();
     // dragon por detras
     dragon.dibujar(ctx, { filtro: (i) => dragon.puntos[i].z < 0, prof });
@@ -375,7 +395,9 @@
     }
     vctx.globalCompositeOperation = 'source-over';
   }
+  const quieto = matchMedia('(prefers-reduced-motion: reduce)');
   function pasoVuelo(dt) {
+    if (quieto.matches && V.estado !== 'boca') { V.estado = 'fuera'; V.espera = 5; return false; }
     if (V.estado === 'boca') { pasoBoca(dt); return true; }
     const pagina = document.body.dataset.pagina;
     const callado = pagina === 'inicio' || pagina === 'juego';
@@ -601,17 +623,19 @@
   /* ---------------- Bucle ---------------- */
   function bucle(ahora) {
     const dt = Math.min(.05, (ahora - ultimo) / 1000);
+    if (!document.hidden) window.Calidad.cuadro(ahora - ultimo);
     ultimo = ahora;
     if (!document.hidden) {
       if (enPantalla(cv)) {
         const m = F.ajustar(cv);
-        if (m.w !== W || m.h !== H) medir();
+        if (m.w !== W || m.h !== H || m.d !== D) medir();
         const pose = pasoPortada(dt);
         moverParticulas(dt);
         dibujarPortada(pose);
       }
       mini.forEach(m => pasoMini(m, dt));
       pasoTecnica(dt);
+      if (F.ajustar(vuelo).d !== vD) medirVuelo();
       pasoVuelo(dt);
       dibujarVuelo(dt);
     }

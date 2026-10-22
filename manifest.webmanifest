@@ -1,0 +1,23 @@
+{
+  "name": "Ordóñez Team Element Karate",
+  "short_name": "Element Karate",
+  "description": "Kempo Karate Hawaiano en San José Pinula",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c0a0b",
+  "theme_color": "#0c0a0b",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "img/icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/logo-tigre.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

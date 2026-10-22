@@ -621,6 +621,19 @@
   // El tamano se guarda y lo actualiza un ResizeObserver, asi el bucle de
   // dibujo nunca obliga al navegador a recalcular la pagina en cada cuadro.
   const medidas = new WeakMap();
+  // Calidad adaptable, si los cuadros tardan se baja la densidad del dibujo
+  // y se sube otra vez cuando sobra tiempo. Asi la animacion nunca se traba.
+  const Calidad = {
+    nivel: 1, ver: 0, prom: 16, lento: 0, sobra: 0,
+    cuadro(dtMs) {
+      if (dtMs > 200) return;
+      this.prom += (dtMs - this.prom) * .08;
+      if (this.prom > 21) { this.lento += dtMs; this.sobra = 0; } else if (this.prom < 15) { this.sobra += dtMs; this.lento = 0; } else { this.lento = 0; this.sobra = 0; }
+      if (this.lento > 1200 && this.nivel > .6) { this.nivel = Math.max(.6, this.nivel - .15); this.ver++; this.lento = 0; this.prom = 16; }
+      if (this.sobra > 5000 && this.nivel < 1) { this.nivel = Math.min(1, this.nivel + .1); this.ver++; this.sobra = 0; }
+    }
+  };
+  window.Calidad = Calidad;
   const vigia = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(es => {
     es.forEach(e => {
       const m = medidas.get(e.target);
@@ -635,8 +648,9 @@
       medidas.set(cv, m);
       if (vigia) vigia.observe(cv);
     }
-    if (m.sucio) {
-      const d = Math.min(devicePixelRatio || 1, 2);
+    if (m.sucio || m.ver !== Calidad.ver) {
+      m.ver = Calidad.ver;
+      const d = Math.max(.75, Math.min(devicePixelRatio || 1, 2) * Calidad.nivel);
       const w = Math.max(1, Math.round(m.w * d)), h = Math.max(1, Math.round(m.h * d));
       if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
       m.d = d; m.sucio = false;
