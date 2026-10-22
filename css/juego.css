@@ -10,6 +10,8 @@
 @media (hover: none) { .juego-marco.jugando::after { opacity: 1; } }
 .juego-capa h3 { text-shadow: 0 6px 30px rgba(215,38,30,.6); }
 .juego-capa .btn { min-width: 200px; }
+.juego-capa .juego-clase { display: none; min-width: 0; }
+.juego-capa.con-clase .juego-clase { display: inline-flex; }
 .juego-dragon { z-index: 2; }
 @media (max-width: 760px) {
   .juego-teclas { font-size: .8rem; gap: 10px; }

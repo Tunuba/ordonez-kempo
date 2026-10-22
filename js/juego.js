@@ -427,9 +427,11 @@
     const nuevo = puntos > r;
     if (nuevo) guardarRecord(puntos);
     setTimeout(() => {
-      titulo.textContent = nuevo ? 'Nueva marca' : 'Fin del reto';
-      texto.textContent = 'Llegaste a cinturón ' + CINTAS[cinta][0].toLowerCase() + ' con ' + puntos + ' puntos y un combo de ' + mejorCombo + '.';
+      titulo.textContent = nuevo ? 'Nueva marca' : (puntos ? 'Fin del reto' : 'Te ganaron las sombras');
+      if (!puntos) texto.textContent = 'Golpea cuando la sombra esté cerca, ni antes ni después. En el dojo te enseñamos de verdad.';
+      else texto.textContent = 'Llegaste a cinturón ' + CINTAS[cinta][0].toLowerCase() + ' con ' + puntos + ' puntos' + (mejorCombo > 1 ? ' y un combo de ' + mejorCombo + '.' : '.') + (cinta < CINTAS.length - 1 ? ' El negro te espera en el dojo.' : ' Eres cinturón negro, ahora ven por el de verdad.');
       btnEmpezar.textContent = 'Jugar otra vez';
+      capa.classList.add('con-clase');
       pintarRecord();
       capa.classList.remove('oculta');
       modo = 'menu';
