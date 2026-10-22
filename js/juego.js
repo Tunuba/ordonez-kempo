@@ -67,6 +67,101 @@
     const g = ac.createGain(); env(g, t, .01, vol, dur);
     s.connect(b); b.connect(g); g.connect(maestro); s.start(t, Math.random() * .5); s.stop(t + dur + .05);
   }
+
+  // Rugido de dragon sintetizado por capas. Una garganta grave con dos sierras
+  // desafinadas que tiemblan (eso le da lo rasposo), pasada por una
+  // distorsion suave y por tres filtros de formante que van de una A abierta
+  // a una O, como una boca que se abre y se cierra. Encima va el aire del
+  // aliento, un golpe grave que se siente en el pecho y una sala con eco.
+  let salaEco = null;
+  function sala(ac) {
+    if (salaEco && salaEco.context === ac) return salaEco;
+    const largo = Math.floor(ac.sampleRate * 2.4), b = ac.createBuffer(2, largo, ac.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = b.getChannelData(c);
+      for (let i = 0; i < largo; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / largo, 3.2);
+    }
+    salaEco = ac.createConvolver(); salaEco.buffer = b;
+    return salaEco;
+  }
+  function curvaRasposa(k) {
+    const n = 2048, c = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = (1 + k) * x / (1 + k * Math.abs(x)); }
+    return c;
+  }
+  function rugidoDragon(ac, salida, ruido, fuerza) {
+    const t = ac.currentTime + .01, dur = 2.1 * (fuerza || 1);
+    const total = ac.createGain(); total.gain.value = .9;
+    const eco = sala(ac), mojado = ac.createGain(); mojado.gain.value = .32;
+    total.connect(salida); total.connect(eco); eco.connect(mojado); mojado.connect(salida);
+    const pico = .9;
+
+    // garganta, la frecuencia sube al abrir la boca y cae al final
+    const garganta = ac.createGain();
+    const tono = (det, tipo) => {
+      const o = ac.createOscillator(); o.type = tipo; o.detune.value = det;
+      o.frequency.setValueAtTime(70, t);
+      o.frequency.exponentialRampToValueAtTime(132, t + .28);
+      o.frequency.exponentialRampToValueAtTime(104, t + .9);
+      o.frequency.exponentialRampToValueAtTime(46, t + dur);
+      // vibrato lento de animal grande
+      const v = ac.createOscillator(), vg = ac.createGain(); v.frequency.value = 5.5; vg.gain.value = 4;
+      v.connect(vg); vg.connect(o.frequency); v.start(t); v.stop(t + dur + .1);
+      o.connect(garganta); o.start(t); o.stop(t + dur + .1);
+    };
+    tono(-14, 'sawtooth'); tono(11, 'sawtooth'); tono(-1200, 'square');
+    // temblor de la garganta, lo que hace que suene a gruñido y no a sirena
+    const temblor = ac.createGain(); temblor.gain.value = .55;
+    const lfo = ac.createOscillator(), lfoG = ac.createGain();
+    lfo.type = 'triangle';
+    lfo.frequency.setValueAtTime(22, t); lfo.frequency.linearRampToValueAtTime(34, t + .5); lfo.frequency.linearRampToValueAtTime(16, t + dur);
+    lfoG.gain.value = .45; lfo.connect(lfoG); lfoG.connect(temblor.gain); lfo.start(t); lfo.stop(t + dur + .1);
+    garganta.connect(temblor);
+    const rasposo = ac.createWaveShaper(); rasposo.curve = curvaRasposa(9); rasposo.oversample = '4x';
+    temblor.connect(rasposo);
+    // formantes, boca abierta A y luego O
+    const voz = ac.createGain();
+    env2(voz, t, [[0, .0001], [.12, pico], [.55, pico * .85], [1.2, pico * .6], [dur, .0001]]);
+    [[700, 430, 7, 1], [1220, 800, 8, .7], [2600, 2300, 9, .35]].forEach(([fa, fo, q, g]) => {
+      const b = ac.createBiquadFilter(); b.type = 'bandpass'; b.Q.value = q;
+      b.frequency.setValueAtTime(fo, t); b.frequency.exponentialRampToValueAtTime(fa, t + .3); b.frequency.exponentialRampToValueAtTime(fo, t + dur * .85);
+      const bg = ac.createGain(); bg.gain.value = g * 2.4;
+      rasposo.connect(b); b.connect(bg); bg.connect(voz);
+    });
+    const cuerpo = ac.createBiquadFilter(); cuerpo.type = 'lowpass'; cuerpo.frequency.value = 520;
+    const cuerpoG = ac.createGain(); cuerpoG.gain.value = .6;
+    rasposo.connect(cuerpo); cuerpo.connect(cuerpoG); cuerpoG.connect(voz);
+    voz.connect(total);
+
+    // aliento, aire que sale con fuerza
+    const aire = ac.createBufferSource(); aire.buffer = ruido; aire.loop = true;
+    const aireF = ac.createBiquadFilter(); aireF.type = 'bandpass'; aireF.Q.value = .9;
+    aireF.frequency.setValueAtTime(900, t); aireF.frequency.exponentialRampToValueAtTime(2400, t + .3); aireF.frequency.exponentialRampToValueAtTime(600, t + dur);
+    const aireG = ac.createGain();
+    env2(aireG, t, [[0, .0001], [.1, .32], [.7, .22], [dur, .0001]]);
+    aire.connect(aireF); aireF.connect(aireG); aireG.connect(total);
+    aire.start(t, Math.random() * .4); aire.stop(t + dur + .1);
+
+    // golpe grave al empezar, se siente en el pecho
+    const sub = ac.createOscillator(), subG = ac.createGain(); sub.type = 'sine';
+    sub.frequency.setValueAtTime(62, t); sub.frequency.exponentialRampToValueAtTime(34, t + .9);
+    env2(subG, t, [[0, .0001], [.05, .8], [.9, .0001]]);
+    sub.connect(subG); subG.connect(total); sub.start(t); sub.stop(t + 1);
+  }
+  // envolvente por puntos [tiempo, volumen]
+  function env2(g, t, puntos) {
+    g.gain.setValueAtTime(puntos[0][1], t + puntos[0][0]);
+    for (let i = 1; i < puntos.length; i++) g.gain.exponentialRampToValueAtTime(Math.max(.0001, puntos[i][1]), t + puntos[i][0]);
+  }
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__rugido = rugidoDragon;
+  // la portada y la entrada de paginas tambien usan este rugido
+  window.Sonido = {
+    rugido(fuerza) {
+      audio();
+      if (!ac || mudo) return;
+      rugidoDragon(ac, maestro, ruido, fuerza || .8);
+    }
+  };
   const SON = {
     golpe(ko) { tono('sine', ko ? 170 : 150, 45, ko ? .22 : .13, ko ? .9 : .65); soplo(2400, 900, .07, ko ? .5 : .35, .8); },
     aire() { soplo(500, 2600, .16, .22, 1.4); },
@@ -80,13 +175,7 @@
     },
     rugido() {
       if (!ac || mudo) return;
-      const t = ac.currentTime;
-      const o = ac.createOscillator(), lp = ac.createBiquadFilter(), g = ac.createGain();
-      o.type = 'sawtooth'; o.frequency.setValueAtTime(95, t); o.frequency.linearRampToValueAtTime(140, t + .3); o.frequency.exponentialRampToValueAtTime(48, t + 1.4);
-      lp.type = 'lowpass'; lp.frequency.value = 700;
-      env(g, t, .08, .5, 1.4);
-      o.connect(lp); lp.connect(g); g.connect(maestro); o.start(t); o.stop(t + 1.6);
-      soplo(300, 1200, 1.2, .35, .6);
+      rugidoDragon(ac, maestro, ruido, 1);
     },
     tambor(fuerte, cuando) { tono('sine', fuerte ? 95 : 120, 38, fuerte ? .32 : .18, fuerte ? .42 : .2, cuando); if (fuerte) soplo(180, 90, .1, .12, .7, cuando); }
   };
