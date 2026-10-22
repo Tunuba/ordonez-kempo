@@ -63,7 +63,7 @@
     const tel = W < 760;
     esc = Math.min(H / 210 * (tel ? .36 : .5), W / 210 * (tel ? .62 : .5));
     fx = tel ? W * .5 : W * .66;
-    fy = tel ? H * .5 : H * .86;
+    fy = tel ? H * .42 : H * .86;
     capas = [
       { v: volcanes(W, fy - 4, 7, H * .30), c: '#2a110e', k: .02 },
       { v: volcanes(W, fy + 2, 21, H * .2), c: '#1c0b0a', k: .05 },
@@ -304,7 +304,8 @@
   const GRUPOS = {
     ninos:   { prop: { cabeza: 1.3, torso: .8, pierna: .8, brazo: .85 }, cinta: '#f2c230', seq: ['frontal', 'guardia', 'directo', 'guardia', 'victoria', 'guardia'] },
     jovenes: { prop: {}, cinta: '#2f9e4a', seq: ['directo', 'cruzado', 'guardia', 'circular', 'guardia'] },
-    adultos: { prop: {}, cinta: '#141012', seq: ['cuchillo', 'codo', 'guardia', 'rodilla', 'bloqueo', 'guardia'] }
+    adultos: { prop: {}, cinta: '#141012', seq: ['cuchillo', 'codo', 'guardia', 'rodilla', 'bloqueo', 'guardia'] },
+    promo:   { prop: {}, cinta: '#141012', seq: ['saludo', 'guardia', 'directo', 'cruzado', 'circular', 'guardia', 'victoria', 'guardia'] }
   };
   const mini = [...document.querySelectorAll('.clase-fig')].map((c, i) => {
     const g = GRUPOS[c.dataset.pose];
